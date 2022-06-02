@@ -278,6 +278,744 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     else:
         messagebox.showinfo('', "MWR Boat usage report in folder: " + reportpath)
 
+def ReportDetailUse():
+    
+    #####################################################################
+    # 
+    # This report reads the SailPlan table and summarizes utilization by 
+    # month for the previous calendar year.  Each boat and boat type is
+    # summarized with hours and revenues.
+    #
+
+    month_list = ['January', 'February', 'March',
+                    'April', 'May', 'June', 
+                    'July', 'August', 'September',
+                    'October', 'November', 'December']
+
+    reportpath = './Reports'
+    
+    myreportname = reportpath + '/' + ' Detailed Utilization' + '.csv'
+
+    db = sqlite3.connect('Sailsheets.db')
+    c = db.cursor()
+        
+    c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, ledger_id, 
+        l_date, l_member_id, l_name, l_skipper, SailPlan.sp_purpose AS purpose, Ledger.l_sp_id, 
+        SailPlan.sp_hours AS hours, l_fee AS revenue
+        FROM Ledger 
+        JOIN SailPlan on Ledger.l_sp_id=SailPlan.sp_id
+        JOIN Boats on SailPlan.sp_sailboat=Boats.boat_Name
+        ORDER BY l_date, l_sp_id, boatclass, Sailboat, purpose, l_member_id
+        """)
+    logger.info('Fetched data for Utilization Report.')
+        
+    usagetable = c.fetchall()
+        
+    with open(myreportname, 'w', newline='') as f:
+        firstrecord = usagetable[0]
+        boatclass = firstrecord[0]
+        boat = firstrecord[1]
+        boatpurpose = firstrecord[7]
+        myspid = firstrecord[8]
+        mydate = date.fromisoformat(str(firstrecord[3]))
+        myyear = mydate.year
+        mymonth = mydate.month
+        myday = mydate.day
+        w = csv.writer(f, dialect='excel')
+        w.writerow(["Report period Beginning: ", str(mydate)])
+        w.writerow(["Report period ends with current year."])
+        w.writerow([" "])
+
+        w.writerow(["Year: " + str(myyear)])
+        w.writerow(["Month:" + str(month_list[mymonth-1])])
+        w.writerow([" ", "Boat Class: " + str(boatclass)])
+        w.writerow([" ", " ", "Sailplan ID", "Date", "Boat", "Purpose", "Name", "Hours", "Revenue"])
+        #w.writerow([" "])
+        
+        # Set the totals to zero 
+        #
+        # hrs_purpose_month_total = 0
+        # hrs_purpose_year_total = 0
+        hrs_purpose_total = 0
+        
+        hrs_boat_month_total = 0
+        hrs_boat_year_total = 0
+        hrs_boat_total = 0
+        
+        hrs_class_month_total = 0
+        hrs_class_year_total = 0
+        hrs_class_total = 0
+
+        hrs_month_total = 0
+        hrs_year_total = 0
+        
+        hrs_grand_total = 0
+        
+        revenue_purpose_total = 0
+        revenue_boat_total = 0
+        revenue_class_total = 0
+        revenue_month_total = 0
+        revenue_year_total = 0
+        revenue_grand_total = 0
+
+        for record in usagetable:
+            mydate = date.fromisoformat(str(record[3]))
+            myrow = ([' ', ' ', 
+                str(record[8]), 
+                str(mydate), 
+                str(record[1]), 
+                str(record[7]),
+                str(record[5]),
+                str(round(record[9],1)), 
+                str(round(record[10],2))])
+
+            if (myspid == record[8] 
+                    and boat == record[1] 
+                    and boatclass == record[0] 
+                    and mydate.month == mymonth 
+                    and mydate.year == myyear):
+
+                # This is the case that simply lists the crew.
+                
+                hrs_purpose_total = record[9]
+                #hrs_boat_total = record[9]
+                #hrs_class_total = record[9]
+                #hrs_month_total = record[9]
+                #hrs_year_total = record[9]
+                #hrs_grand_total = record[9]
+                revenue_purpose_total += record[10]
+                revenue_boat_total += record[10]
+                revenue_class_total += record[10]
+                revenue_month_total += record[10]
+                revenue_year_total += record[10]
+                revenue_grand_total += record[10]
+                #
+                w.writerow(myrow)
+                #
+            elif (myspid != record[8] 
+                    and boat == record[1] 
+                    and boatclass == record[0] 
+                    and mydate.month == mymonth 
+                    and mydate.year == myyear):
+
+                # This is the case for a new sail plan, so start over.
+
+                #w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ", 
+                    "Purpose Subsubtotal:", 
+                    str(round(hrs_purpose_total,1)), 
+                    str(round(revenue_purpose_total, 2))])
+                w.writerow([" "])
+
+                boatpurpose = record[7]
+                myspid = record[8]
+                boat = record[1]
+                boatclass = record[0]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                hrs_purpose_total = record[9]
+                hrs_boat_total += record[9]
+                hrs_class_total += record[9]
+                hrs_month_total += record[9]
+                hrs_year_total += record[9]
+                hrs_grand_total += record[9]
+                revenue_purpose_total = record[10]
+                revenue_boat_total += record[10]
+                revenue_class_total += record[10]
+                revenue_month_total += record[10]
+                revenue_year_total += record[10]
+                revenue_grand_total += record[10]
+                
+                w.writerow(myrow)
+                #
+            elif (boat != record[1] 
+                    and boatclass == record[0] 
+                    and mydate.month == mymonth 
+                    and mydate.year == myyear):
+                #w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ", 
+                    "Purpose Subsubtotal:", 
+                    str(round(hrs_purpose_total,1)), 
+                    str(round(revenue_purpose_total, 2))])
+                w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ",  " ", " ",
+                    "Boat Subtotal:", 
+                    str(round(hrs_boat_total,1)), 
+                    str(round(revenue_boat_total, 2))])
+                w.writerow([" "])
+                
+                boatpurpose = record[7]
+                myspid = record[8]
+                boat = record[1]
+                boatclass = record[0]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                w.writerow([" ", " ", "Sailplan ID", "Date", "Boat", "Purpose", "Name", "Hours", "Revenue"])
+                
+                hrs_purpose_total = record[9]
+                hrs_boat_total = record[9]
+                hrs_class_total += record[9]
+                hrs_month_total += record[9]
+                hrs_year_total += record[9]
+                hrs_grand_total += record[9]
+                revenue_purpose_total = record[10]
+                revenue_boat_total = record[10]
+                revenue_class_total += record[10]
+                revenue_month_total += record[10]
+                revenue_year_total += record[10]
+                revenue_grand_total += record[10]
+                #
+                w.writerow(myrow)
+                #
+            elif (boatclass != record[0] 
+                    and mydate.month == mymonth 
+                    and mydate.year == myyear):
+                #w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ", 
+                    "Purpose Subsubtotal:", 
+                    str(round(hrs_purpose_total,1)), 
+                    str(round(revenue_purpose_total, 2))])
+                w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Subtotal:", 
+                    str(round(hrs_boat_total,1)), 
+                    str(round(revenue_boat_total, 2))])
+                w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Class Total:", 
+                    str(round(hrs_class_total,1)), 
+                    str(round(revenue_class_total, 2))])
+                w.writerow([" "])
+
+                boatpurpose = record[7]
+                myspid = record[8]
+                boat = record[1]
+                boatclass = record[0]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                w.writerow([" ", "Boat Class: " + str(boatclass)])
+                w.writerow([" ", " ", "Sailplan ID", "Date", "Boat", "Purpose", "Name", "Hours", "Revenue"])
+        
+                hrs_purpose_total = record[9]
+                hrs_boat_total = record[9]
+                hrs_class_total = record[9]
+                hrs_month_total += record[9]
+                hrs_year_total += record[9]
+                hrs_grand_total += record[9]
+                revenue_purpose_total = record[10]
+                revenue_boat_total = record[10]
+                revenue_class_total = record[10]
+                revenue_month_total += record[10]
+                revenue_year_total += record[10]
+                revenue_grand_total += record[10]
+                
+                w.writerow(myrow)
+        
+            elif (mydate.month != mymonth 
+                    and mydate.year == myyear):
+                
+                #w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Purpose Subsubtotal:", 
+                    str(round(hrs_purpose_total,1)), 
+                    str(round(revenue_purpose_total, 2))])
+                w.writerow([" "])
+                
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Subtotal:", 
+                    str(round(hrs_boat_total,1)), 
+                    str(round(revenue_boat_total, 2))])
+                
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Class Total:", 
+                    str(round(hrs_class_total,1)), 
+                    str(round(revenue_class_total, 2))])
+
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Month Total:", 
+                    str(round(hrs_month_total,1)), 
+                    str(round(revenue_month_total, 2))])
+                
+                w.writerow([" "])
+
+                boatpurpose = record[7]
+                myspid = record[8]
+                boat = record[1]
+                boatclass = record[0]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                w.writerow(["Month: " + str(month_list[mydate.month-1])])
+                w.writerow([" ", "Boat Class: " + str(boatclass)])
+                w.writerow([" ", " ", "Sailplan ID", "Date", "Boat", "Purpose", "Name", "Hours", "Revenue"])
+        
+                hrs_purpose_total = record[8]
+                hrs_boat_total = record[8]
+                hrs_class_total = record[8]
+                hrs_month_total = record[8]
+                hrs_year_total += record[8]
+                hrs_grand_total += record[8]
+                revenue_purpose_total = record[9]
+                revenue_boat_total = record[9]
+                revenue_class_total = record[9]
+                revenue_month_total = record[9]
+                revenue_year_total += record[9]
+                revenue_grand_total += record[9]
+                
+                w.writerow(myrow)
+
+            elif (mydate.year != myyear):
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Purpose Subsubtotal:", 
+                    str(round(hrs_purpose_total,1)), 
+                    str(round(revenue_purpose_total, 2))])
+                w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Subtotal:", 
+                    str(round(hrs_boat_total,1)), 
+                    str(round(revenue_boat_total, 2))])
+                w.writerow([" "])
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Boat Class Subotal:", 
+                    str(round(hrs_class_total,1)), 
+                    str(round(revenue_class_total, 2))])
+
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Month Subtotal:", 
+                    str(round(hrs_month_total,1)), 
+                    str(round(revenue_month_total, 2))])
+                
+                w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+                    "Year Subtotal:", 
+                    str(round(hrs_year_total,1)), 
+                    str(round(revenue_year_total, 2))])
+                
+                w.writerow([" "])
+                
+                boatpurpose = record[7]
+                myspid = record[8]
+                boat = record[1]
+                boatclass = record[0]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                w.writerow(["Year: " + str(mydate.year)])
+                w.writerow(["Month: " + str(month_list[mydate.month-1])])
+                w.writerow([" ", "Boat Class: " + str(boatclass)])
+                w.writerow([" ", " ", "Sailplan ID", "Date", "Boat", "Purpose", "Name", "Hours", "Revenue"])
+        
+                hrs_purpose_total = record[9]
+                hrs_boat_total = record[9]
+                hrs_class_total = record[9]
+                hrs_month_total = record[9]
+                hrs_year_total = record[9]
+                hrs_grand_total += record[9]
+                revenue_purpose_total = record[10]
+                revenue_boat_total = record[10]
+                revenue_class_total = record[10]
+                revenue_month_total = record[10]
+                revenue_year_total = record[10]
+                revenue_grand_total += record[10]
+                
+                w.writerow(myrow)
+
+
+        w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+            "Purpose Subsubtotal:", 
+            str(round(hrs_purpose_total,1)), 
+            str(round(revenue_purpose_total, 2))])
+        w.writerow([" "])
+        w.writerow([" ", " ", " ", " ", " ", " ", 
+            "Boat Subtotal:", str(round(hrs_boat_total,1)), 
+            str(round(revenue_boat_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+            "Boat Class Total:", str(round(hrs_class_total,1)), 
+            str(round(revenue_class_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+            "Month Subtotal:", str(round(hrs_month_total,1)), 
+            str(round(revenue_month_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+            "Year Subtotal:", str(round(hrs_year_total,1)), 
+            str(round(revenue_year_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([" ", " ", " ", " ", " ", " ", " ", " ",
+            "Grand Total:", str(round(hrs_grand_total,1)), 
+            str(round(revenue_grand_total, 2))])
+        w.writerow([" "])
+
+    db.commit()
+    db.close()
+    logger.info('Executed ReportDetailUse ')
+    messagebox.showinfo('', "Detailed Boat usage report in folder: " + reportpath)
+    
+def ReportSummaryUse():
+    
+    #####################################################################
+    # 
+    # This report reads the SailPlan table and summarizes utilization by 
+    # month for the previous calendar year.  Each boat and boat type is
+    # summarized with hours and revenues.
+    #
+
+    month_list = ['January', 'February', 'March',
+                    'April', 'May', 'June', 
+                    'July', 'August', 'September',
+                    'October', 'November', 'December']
+
+    reportpath = './Reports'
+    
+    myreportname = reportpath + '/' + ' Summary Utilization' + '.csv'
+
+    db = sqlite3.connect('Sailsheets.db')
+    c = db.cursor()
+        
+    c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, 
+        SailPlan.sp_timeout AS sp_date, 
+        SailPlan.sp_hours AS hours, SailPlan.sp_feesdue AS revenue, SailPlan.sp_id
+        FROM SailPlan 
+        JOIN Boats on SailPlan.sp_sailboat=Boats.boat_Name
+        ORDER BY boatclass, Sailboat, SailPlan.sp_timeout
+        """)    
+    
+    usagetable = c.fetchall()
+        
+    logger.info('Fetched data for Summary Use Report.')
+    
+    with open(myreportname, 'w', newline='') as f:
+        firstrecord = usagetable[0]
+        boatclass = firstrecord[0]
+        boat = firstrecord[1]
+        mydate = date.fromisoformat(str(firstrecord[2])[0:10])
+        myyear = mydate.year
+        mymonth = mydate.month
+        
+        # Set the totals to zero 
+        #
+        hrs_boat_month_total = 0
+        hrs_boat_year_total = 0
+        hrs_boat_total = 0
+        
+        rev_boat_month_total = 0
+        rev_boat_year_total = 0
+        rev_boat_total = 0
+
+        hrs_class_month_total = 0
+        hrs_class_year_total = 0
+        hrs_class_total = 0
+
+        rev_class_month_total = 0
+        rev_class_year_total = 0
+        rev_class_total = 0
+
+        hrs_month_total = 0
+        hrs_year_total = 0
+        
+        rev_month_total = 0
+        rev_year_total = 0
+
+        hrs_grand_total = 0
+        rev_grand_total = 0        
+
+        w = csv.writer(f, dialect='excel')
+        
+        w.writerow(["Summary Report"])
+        w.writerow([" "])
+        w.writerow(["Boat Class: " + str(boatclass)])
+        w.writerow([" ", "Boat", "Year", "Month", "Hours", "Revenue"])
+        
+        for record in usagetable:
+            mydate = date.fromisoformat(str(record[2])[0:10])
+ #           myrow = ([' ', 
+ #               str(record[1]), 
+ #               str(mydate.year), 
+ #               str(month_list[mydate.month-1]),
+ #               str(round(record[3],1)), 
+ #               str(round(record[4],2))])
+
+            if (boatclass == record[0]      
+                    and boat == record[1] 
+                    and mydate.month == mymonth 
+                    and mydate.year == myyear):
+
+                hrs_boat_month_total += record[3]
+                hrs_boat_year_total += record[3]
+                hrs_boat_total += record[3]
+                
+                hrs_class_month_total += record[3]
+                hrs_class_year_total += record[3]
+                hrs_class_total += record[3]
+
+                hrs_month_total += record[3]
+                hrs_year_total += record[3]
+                hrs_grand_total += record[3]
+
+                rev_boat_month_total += record[4]
+                rev_boat_year_total += record[4]
+                rev_boat_total += record[4]
+
+                rev_class_month_total += record[4]
+                rev_class_year_total += record[4]
+                rev_class_total += record[4]
+                
+                rev_month_total += record[4]
+                rev_year_total += record[4]
+                rev_grand_total += record[4]
+
+#                w.writerow(myrow)
+
+            elif (boatclass == record[0] 
+                    and boat == record[1] 
+                    and mydate.year == myyear
+                    and mydate.month != mymonth):
+
+                # This is the case for a new month, so start over.
+
+                hrs_boat_year_total += record[3]
+                hrs_boat_total += record[3]
+                
+                hrs_class_month_total = record[3]
+                hrs_class_year_total += record[3]
+                hrs_class_total += record[3]
+
+                hrs_month_total = record[3]
+                hrs_year_total += record[3]
+                hrs_grand_total += record[3]
+
+                rev_boat_year_total += record[4]
+                rev_boat_total += record[4]
+
+                rev_class_month_total = record[4]
+                rev_class_year_total += record[4]
+                rev_class_total += record[4]
+                
+                rev_month_total = record[4]
+                rev_year_total += record[4]
+                rev_grand_total += record[4]
+                
+                myrow = ([' ', 
+                    str(boat), 
+                    str(myyear), 
+                    str(month_list[mymonth-1]),
+                    str(round(hrs_boat_month_total,1)), 
+                    str(round(rev_boat_month_total,2))])
+                w.writerow(myrow)
+                
+                hrs_boat_month_total = record[3]
+                rev_boat_month_total = record[4]
+                
+                boatclass = record[0]
+                boat = record[1]
+                mymonth = mydate.month
+                myyear = mydate.year
+
+            elif (boatclass == record[0] 
+                    and boat == record[1] 
+                    and mydate.year != myyear):
+
+                # This is the case for a new year, so start over.
+
+                hrs_boat_total += record[3]
+                hrs_class_total += record[3]
+                hrs_grand_total += record[3]
+                rev_boat_total += record[4]
+                rev_class_total += record[4]
+                rev_grand_total += record[4]
+                
+                myrow = ([' ', 
+                    str(boat), 
+                    str(myyear), 
+                    str(month_list[mymonth-1]),
+                    str(round(hrs_boat_month_total,1)), 
+                    str(round(rev_boat_month_total,2))])
+                w.writerow(myrow)
+                # w.writerow([" year change "])
+
+                # myrow = ([' ', 
+                #     str(boatclass) + " subtotal:", 
+                #     str(myyear), 
+                #     str(month_list[mymonth-1]),
+                #     str(round(hrs_class_year_total,1)), 
+                #     str(round(rev_class_year_total,2))])
+                # w.writerow(myrow)
+
+                w.writerow([str(boatclass), str(boat), str(myyear), "Subtotals:",
+                    str(round(hrs_boat_year_total, 1)), 
+                    str(round(rev_boat_year_total, 2))])
+                
+                w.writerow([" "])
+
+                boatclass = record[0]
+                boat = record[1]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                hrs_boat_month_total = record[3]
+                hrs_boat_year_total = record[3]
+                rev_boat_month_total = record[4]
+                rev_boat_year_total = record[4]
+                hrs_class_month_total = record[3]
+                hrs_class_year_total = record[3]
+                hrs_month_total = record[3]
+                hrs_year_total = record[3]
+                rev_class_month_total = record[4]
+                rev_class_year_total = record[4]
+                rev_month_total = record[4]
+                rev_year_total = record[4]
+                
+
+            elif (boat != record[1]
+                    and boatclass == record[0]):
+
+                # This is the case for a new boat, so start over.
+
+                # w.writerow([" "])
+                w.writerow([str(boatclass), str(boat), str(myyear), "Subtotals:",
+                    str(round(hrs_boat_year_total, 1)), 
+                    str(round(rev_boat_year_total, 2))])
+                w.writerow([" "])
+
+                w.writerow([str(boatclass), str(boat), " ", "Totals:",
+                    str(round(hrs_boat_total,1)), 
+                    str(round(rev_boat_total, 2))])
+                w.writerow([" "])
+
+                w.writerow([" ", "Boat", "Year", "Month", "Hours", "Revenue"])
+        
+                boatclass = record[0]
+                boat = record[1]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                hrs_boat_month_total = record[3]
+                hrs_boat_year_total = record[3]
+                hrs_boat_total = record[3]
+                
+                hrs_class_month_total = record[3]
+                hrs_class_year_total = record[3]
+                hrs_class_total += record[3]
+
+                hrs_month_total = record[3]
+                hrs_year_total = record[3]
+                hrs_grand_total += record[3]
+
+                rev_boat_month_total = record[4]
+                rev_boat_year_total = record[4]
+                rev_boat_total = record[4]
+
+                rev_class_month_total = record[4]
+                rev_class_year_total = record[4]
+                rev_class_total += record[4]
+                
+                rev_month_total = record[4]
+                rev_year_total = record[4]
+                rev_grand_total += record[4]
+                
+                # myrow = ([' ', 
+                #     str(boat), 
+                #     str(myyear), 
+                #     str(month_list[mymonth-1]),
+                #     str(round(hrs_boat_month_total,1)), 
+                #     str(round(rev_boat_month_total,2))])
+                # w.writerow(myrow)
+                
+                
+            elif (boatclass != record[0]):
+
+                # This is the case for a new class, so start over.
+
+                w.writerow([str(boatclass), str(boat), str(myyear), "Subtotals:",
+                    str(round(hrs_boat_year_total, 1)), 
+                    str(round(rev_boat_year_total, 2))])
+                w.writerow([" "])
+
+                w.writerow([str(boatclass), str(boat), " ", "Totals:",
+                    str(round(hrs_boat_total,1)), 
+                    str(round(rev_boat_total, 2))])
+                w.writerow([" "])
+
+                w.writerow([str(boatclass), " ", " ", 
+                    "Class Total:",
+                    str(round(hrs_class_total,1)), 
+                    str(round(rev_class_total, 2))])
+                w.writerow([" "])
+
+                boatclass = record[0]
+                boat = record[1]
+                mymonth = mydate.month
+                myyear = mydate.year
+        
+                w.writerow(["Boat Class: " + str(boatclass)])
+                w.writerow([" ", "Boat", "Year", "Month", "Hours", "Revenue"])
+
+                hrs_boat_month_total = record[3]
+                hrs_boat_year_total = record[3]
+                hrs_boat_total = record[3]
+                
+                hrs_class_month_total = record[3]
+                hrs_class_year_total = record[3]
+                hrs_class_total = record[3]
+
+                hrs_month_total = record[3]
+                hrs_year_total = record[3]
+                hrs_grand_total += record[3]
+
+                rev_boat_month_total = record[4]
+                rev_boat_year_total = record[4]
+                rev_boat_total = record[4]
+
+                rev_class_month_total = record[4]
+                rev_class_year_total = record[4]
+                rev_class_total = record[4]
+                
+                rev_month_total = record[4]
+                rev_year_total = record[4]
+                rev_grand_total += record[4]
+                
+                # myrow = ([' ', 
+                #     str(boat), 
+                #     str(myyear), 
+                #     str(month_list[mymonth-1]),
+                #     str(round(hrs_boat_month_total,1)), 
+                #     str(round(rev_boat_month_total,2))])
+                # w.writerow(myrow)
+
+
+        w.writerow([str(boatclass), str(boat), str(myyear), "Subtotals:",
+            str(round(hrs_boat_year_total, 1)), 
+            str(round(rev_boat_year_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([str(boatclass), str(boat), " ", "Totals:",
+            str(round(hrs_boat_total,1)), 
+            str(round(rev_boat_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([str(boatclass), " ", " ", 
+            "Class Total:",
+            str(round(hrs_class_total,1)), 
+            str(round(rev_class_total, 2))])
+        w.writerow([" "])
+
+        w.writerow([" ", " ", " ",
+            "Grand Total:", str(round(hrs_grand_total,1)), 
+            str(round(rev_grand_total, 2))])
+        w.writerow([" "])
+
+    db.commit()
+    db.close()
+    logger.info('Executed ReportSummaryUse ')
+    messagebox.showinfo('', "Summary Boat usage report in folder: " + reportpath)
+    
 def ReportMemberUse(mymonth, myyear):
     d = datetime.date(day=1, month=mymonth, year=myyear)
     month_list = ['January', 'February', 'March',
