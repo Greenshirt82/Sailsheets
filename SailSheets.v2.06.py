@@ -189,7 +189,10 @@ def main():
         command=lambda: SS_admin.monthly_reports(root))
     reports_menu.add_command(label="Create Member Use Log", 
         command=lambda: SS_admin.member_usage_log(root))
-
+    reports_menu.add_command(label="Create Detail Usage Report", 
+        command=lambda: SS_reports.ReportDetailUse())
+    reports_menu.add_command(label="Create Summary Usage Report", 
+        command=lambda: SS_reports.ReportSummaryUse())
 
     # Let's put a label at the top of the window
     my_label = Label(root, text = main_banner, fg=main_color, font=("Helvetica", 24))
