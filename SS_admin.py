@@ -9,6 +9,7 @@ import datetime as dt
 from datetime import timedelta
 
 import SS_reports
+import SS_Create_Charges_File
 import updatemembers
 
 # Set up the logging system
@@ -147,6 +148,9 @@ def monthly_reports(mywin):
 	# 1. Member usage report for creating bills in Club Express
 	# 2. Boat usage report WITH Skyline -- NPSC Use only
 	# 3. Boat usage report WITHOUT Skyline -- for MWR Use
+	#
+	#	2 June 2022
+	# 4. Charges file from the Ledger for auto uploading of charges to CE
 	# 
 	#################################################################
 
@@ -159,6 +163,7 @@ def monthly_reports(mywin):
 		Report1 = SS_reports.ReportUsage(mymonth, myyear, 1)
 		Report2 = SS_reports.ReportUsage(mymonth, myyear, 0)
 		Report3 = SS_reports.ReportMemberUse(mymonth, myyear)
+		ChargesFile = SS_Create_Charges_File.CreateChargesFile(mymonth, myyear)
 
 		logger.info('Reports for ' + str(mymonth) + '-' + str(myyear) + ' created.')
 		mo_combo.pack_forget()
