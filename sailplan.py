@@ -41,6 +41,7 @@ class sp_askokcancel(object):
 	# Setting Geometry
 		screen_width = self.root.winfo_screenwidth()
 		screen_height = self.root.winfo_screenheight()
+		
 		if len(get_monitors()) != 1:
 			app_width = int((screen_width / 2) * .6)
 			app_height = int(screen_height * .6)
@@ -351,6 +352,7 @@ def sailplanmenu(mywin, my_user):
 					if _hits != self._hits:
 						self._hit_index = 0
 						self._hits=_hits
+
 					# only allow cycling if we are in a known hit list
 					if _hits == self._hits and self._hits:
 						self._hit_index = (self._hit_index + delta) % len(self._hits)
@@ -363,15 +365,19 @@ def sailplanmenu(mywin, my_user):
 			def handle_event(self, event):
 				"""event handler for the keyrelease event on this widget"""
 				#print('Event Key: ', event.keysym)
-				if event.keysym == "Return" or event.keysym == "Tab":
+				if event.keysym == "Return": #or event.keysym == "Tab":
 					if str(self) == '.!labelframe3.!autocompletecombobox':
-						logger.info(str(self) + ': Crew added')
+						logger.info(str(self) + ': Crew added using ' + event.keysym)
 						choosecrew(event)
 					elif str(self) == '.!labelframe2.!autocompletecombobox2':
-						logger.info(str(self) + ': Skipper added')
+						logger.info(str(self) + ': Skipper added using ' + event.keysym)
 						set_skipper_id(event)
+					elif str(self) == '.!labelframe1.!autocompletecombobox':
+						logger.info(str(self) + ':  added using ' + event.keysym)
+					elif str(self) == '.!labelframe2.!autocompletecombobox':
+						logger.info(str(self) + ': Boat added using ' + event.keysym)
 					else: 
-						logger.info(str(self) + ': Nothing added')
+						logger.info(str(self) + ': Nothing added' + event.keysym)
 				if event.keysym == "BackSpace":
 					self.delete(self.index(INSERT), END)
 					self.position = self.index(END)
@@ -428,12 +434,12 @@ def sailplanmenu(mywin, my_user):
 					# query to pull the data from the table
 					c.execute("""SELECT o_id, o_name, o_billtoid FROM openspcrew 
 						WHERE o_spid = :ospid ORDER BY o_name""", {'ospid': spid,})
-					logger.info('Crew table queried for open sailplan ' + str(spid) + '.')
+					# logger.info('Crew table queried for open sailplan ' + str(spid) + '.')
 				else:
 					# query to pull the data from the Ledger table
 					c.execute("""SELECT l_member_id, l_name, l_billto_id FROM Ledger 
 						WHERE l_sp_id = :l_spid ORDER BY l_name""", {'l_spid': spid,})
-					logger.info('Crew table queried for closed sailplan ' + str(spid) + '.')
+					# logger.info('Crew table queried for closed sailplan ' + str(spid) + '.')
 
 				# fetch the data
 				crewqry = c.fetchall()
@@ -441,7 +447,7 @@ def sailplanmenu(mywin, my_user):
 				db.commit()
 				db.close()
 			except:
-				logger.exception('Tried to access sailplan crew list.')
+				logger.exception('Tried to access sailplan crew list and failed.')
 			else:
 				return crewqry
 
@@ -468,6 +474,23 @@ def sailplanmenu(mywin, my_user):
 			# Now remove all the boats checked out from the available boats list
 			for x in myboatsoutlist:
 				myboatlist.remove(x)
+
+			# commit and close the DB
+			db.commit()
+			db.close()
+			return myboatlist
+
+
+		def get_valid_boat_list():
+			# Open the db and establish a cursor
+			db = sqlite3.connect('Sailsheets.db')
+			c = db.cursor()
+
+			# query to pull the list of all boats from the boats table
+			c.execute("""SELECT boat_name FROM Boats WHERE Retired=0 ORDER BY boat_name""")
+
+			# fetch the data
+			myboatlist = [x[0] for x in c.fetchall()]
 
 			# commit and close the DB
 			db.commit()
@@ -553,14 +576,35 @@ def sailplanmenu(mywin, my_user):
 
 
 		def update_sailplan(myspid):
-			# first confirm the Skipper fields are filled
+			# confirm the Boat field is filled with a valid boat
+			validboatlist = get_valid_boat_list()
+			print(validboatlist)
+			if len(boat_combo.get()) == 0:
+				sp_win.attributes('-topmost',0)
+				messagebox.showinfo('ENTRY ERROR!', "No boat listed!")
+				sp_win.attributes('-topmost',1)
+				logger.info('Skipper forgot to choose a boat.')
+				return
+			elif boat_combo.get() in validboatlist:
+				logger.info('Skipper taking ' + boat_combo.get())
+			else:
+				sp_win.attributes('-topmost',0)
+				messagebox.showinfo('ENTRY ERROR!', "We don't have that boat!")
+				sp_win.attributes('-topmost',1)
+				logger.debug('Skipper entered an invalid boat.')
+				return
+
+			# confirm the Skipper fields are filled
 			if str(sp_skid_e.get()) == '0.0':
 				if len(skip_n_combo.get()) == 0: 
 					sp_win.attributes('-topmost',0)
 					messagebox.showinfo('ENTRY ERROR!', 'Skipper name is blank.')
 					sp_win.attributes('-topmost',1)
 					return
-				else:	set_skipper_id(0)
+				else:
+					set_skipper_id(0)
+					logger.info("Sailplan # " + str(myspid) + 'added. ' + 
+						'Skipper: ' + str(sp_skid_e.get()) + ' ' + skip_n_combo.get())
 			
 
 			# pull data from entry boxes and save to the sp table
@@ -963,6 +1007,7 @@ def sailplanmenu(mywin, my_user):
 				})
 			db.commit()
 			db.close()
+			logger.info('New and blank Sailplan added -- # ' + str(c.lastrowid))
 			return c.lastrowid
 
 
@@ -978,7 +1023,7 @@ def sailplanmenu(mywin, my_user):
 			skipname = skip_n_combo.get()
 			if skipname == '': return
 			skipid = float(id_dict[skipname])
-			logger.debug(str(event) + ': Skipper - ' + skipname + ', ID: ' + str(skipid))
+			logger.debug('Skipper added -- ' + skipname + ', ID: ' + str(skipid))
 			#crewqry = getcrewlist(mysp_id, '0')
 			if skipid in [x[0] for x in getcrewlist(mysp_id, '0')]:
 				logger.info('Tried to add a duplicate Skipper.')
@@ -999,7 +1044,7 @@ def sailplanmenu(mywin, my_user):
 		def choosecrew(event):
 			# confirms works 7/15
 			global crew_tree
-			logger.debug(str(event) + ': Crew - ' + a_member_c.get() + ', ID: ' + str(id_dict[a_member_c.get()]))
+			logger.debug('Crew added -- ' + a_member_c.get() + ', ID: ' + str(id_dict[a_member_c.get()]))
 			crewid = float(id_dict[a_member_c.get()])
 			crewqry = getcrewlist(mysp_id, '0')
 			if crewid in [x[0] for x in getcrewlist(mysp_id, '0')]:
@@ -1051,6 +1096,7 @@ def sailplanmenu(mywin, my_user):
 
 			db.commit()
 			db.close()
+			logger.info('Added to openspcrew table: ' + str(crewname))
 			return getcrewlist(mysp_id, '0')
 
 
@@ -1066,6 +1112,7 @@ def sailplanmenu(mywin, my_user):
 		
 				db.commit()
 				db.close()
+				logger.info('Canceled editing of sailplan.')
 			sp_win.destroy()
 			return
 
@@ -1083,6 +1130,7 @@ def sailplanmenu(mywin, my_user):
 			c.execute("DELETE FROM openspcrew WHERE o_name='" + crewname + "'")
 			db.commit()
 			db.close()
+			logger.info('Deleted a crew member.')
 			crew_del_btn.configure(state='disabled')
 			crewqry = getcrewlist(mysp_id, '0')
 			crewlist = [x[1] for x in crewqry]
@@ -1116,7 +1164,7 @@ def sailplanmenu(mywin, my_user):
 			edit_state = 'normal'
 			add_state = 'normal'
 			new = 0
-			logger.info('Sailplan ' + str(mysp_id) + ' edited.')
+			#logger.info('Sailplan ' + str(mysp_id) + ' edited.')
 
 		if mysp_id == -1:
 			w_header = "Navy Patuxent Sailing Club"
@@ -1134,7 +1182,7 @@ def sailplanmenu(mywin, my_user):
 			new = 1 # this is a new record, used when canceling
 			edit_state = "normal"
 			add_state = "normal"
-			logger.info('Sailplan ' + str(mysp_id) + ' to be added.')
+			logger.info('Sailplan ' + str(mysp_id) + ' release & waiver reviewed.')
 
 
 		# Create a new window
