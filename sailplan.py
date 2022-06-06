@@ -367,17 +367,17 @@ def sailplanmenu(mywin, my_user):
 				#print('Event Key: ', event.keysym)
 				if event.keysym == "Return": #or event.keysym == "Tab":
 					if str(self) == '.!labelframe3.!autocompletecombobox':
-						logger.info(str(self) + ': Crew added using ' + event.keysym)
+						#logger.info(str(self) + ': Crew added using ' + event.keysym)
 						choosecrew(event)
 					elif str(self) == '.!labelframe2.!autocompletecombobox2':
-						logger.info(str(self) + ': Skipper added using ' + event.keysym)
+						#logger.info(str(self) + ': Skipper added using ' + event.keysym)
 						set_skipper_id(event)
-					elif str(self) == '.!labelframe1.!autocompletecombobox':
-						logger.info(str(self) + ':  added using ' + event.keysym)
-					elif str(self) == '.!labelframe2.!autocompletecombobox':
-						logger.info(str(self) + ': Boat added using ' + event.keysym)
-					else: 
-						logger.info(str(self) + ': Nothing added' + event.keysym)
+					# elif str(self) == '.!labelframe1.!autocompletecombobox':
+					# 	logger.info(str(self) + ':  added using ' + event.keysym)
+					# elif str(self) == '.!labelframe2.!autocompletecombobox':
+					# 	logger.info(str(self) + ': Boat added using ' + event.keysym)
+					# else: 
+					# 	logger.info(str(self) + ': Nothing added' + event.keysym)
 				if event.keysym == "BackSpace":
 					self.delete(self.index(INSERT), END)
 					self.position = self.index(END)
@@ -432,12 +432,12 @@ def sailplanmenu(mywin, my_user):
 						)
 						""")
 					# query to pull the data from the table
-					c.execute("""SELECT o_id, o_name, o_billtoid FROM openspcrew 
+					c.execute("""SELECT o_id, o_name, o_skipper, o_billtoid FROM openspcrew 
 						WHERE o_spid = :ospid ORDER BY o_name""", {'ospid': spid,})
 					# logger.info('Crew table queried for open sailplan ' + str(spid) + '.')
 				else:
 					# query to pull the data from the Ledger table
-					c.execute("""SELECT l_member_id, l_name, l_billto_id FROM Ledger 
+					c.execute("""SELECT l_member_id, l_name, l_skipper_id, l_billto_id FROM Ledger 
 						WHERE l_sp_id = :l_spid ORDER BY l_name""", {'l_spid': spid,})
 					# logger.info('Crew table queried for closed sailplan ' + str(spid) + '.')
 
@@ -578,7 +578,6 @@ def sailplanmenu(mywin, my_user):
 		def update_sailplan(myspid):
 			# confirm the Boat field is filled with a valid boat
 			validboatlist = get_valid_boat_list()
-			print(validboatlist)
 			if len(boat_combo.get()) == 0:
 				sp_win.attributes('-topmost',0)
 				messagebox.showinfo('ENTRY ERROR!', "No boat listed!")
@@ -603,7 +602,7 @@ def sailplanmenu(mywin, my_user):
 					return
 				else:
 					set_skipper_id(0)
-					logger.info("Sailplan # " + str(myspid) + 'added. ' + 
+					logger.info("Sailplan # " + str(myspid) + ' added. ' + 
 						'Skipper: ' + str(sp_skid_e.get()) + ' ' + skip_n_combo.get())
 			
 
@@ -707,6 +706,7 @@ def sailplanmenu(mywin, my_user):
 				crewqry = c.fetchall()
 				db.commit()
 				db.close()
+				logger.info('Used get_crew_list function')
 				return crewqry
 
 
@@ -1011,10 +1011,30 @@ def sailplanmenu(mywin, my_user):
 			return c.lastrowid
 
 
-		# def enter_press(event): 
-		# 	if sp_skid_e.get() == '': return
-		# 	#skip_n_combo.set(name_dict[float(sp_skid_e.get())])
-		# 	set_skipper_name(event)
+		def update_skipper(event, skip, skipid, spid):
+			# confirms works 7/15
+			db = sqlite3.connect('Sailsheets.db')
+			c = db.cursor()
+
+			# c.execute("""CREATE TABLE IF NOT EXISTS "openspcrew"(o_id real, 
+			# 	o_name text,
+			# 	o_spid int,
+			# 	o_skipper int,
+			# 	o_billtoid real
+			# 	)
+			# 	""")
+
+			c.execute("""UPDATE openspcrew 
+				SET o_skipper = 1 
+				WHERE o_spid = :openspid AND o_id = :openid""",
+				{
+				'openspid': spid,
+				'openid': skipid
+				})
+
+			db.commit()
+			db.close()
+			return getcrewlist(spid, '0')
 
 
 		def set_skipper_id(event): 
@@ -1023,13 +1043,20 @@ def sailplanmenu(mywin, my_user):
 			skipname = skip_n_combo.get()
 			if skipname == '': return
 			skipid = float(id_dict[skipname])
-			logger.debug('Skipper added -- ' + skipname + ', ID: ' + str(skipid))
-			#crewqry = getcrewlist(mysp_id, '0')
-			if skipid in [x[0] for x in getcrewlist(mysp_id, '0')]:
+			if skipid in [x[2] for x in getcrewlist(mysp_id, '0')]:
 				logger.info('Tried to add a duplicate Skipper.')
 				sp_win.attributes('-topmost',0)
 				messagebox.showinfo('ENTRY ERROR!', 'That Skipper is already listed.')
 				sp_win.attributes('-topmost',1)
+			elif skipid in [x[0] for x in getcrewlist(mysp_id, '0')]:
+				sp_skid_e.config(state='normal')
+				sp_skid_e.delete(0, END)
+				sp_skid_e.insert(0, str(skipid))
+				sp_skid_e.config(state='disabled')
+				crewqry = update_skipper(1, 1, skipid, mysp_id)
+				crewlist = [x[1] for x in crewqry]
+				crew_tree = makecrewtree(crewqry, crew_tree, 0)
+				logger.info('Skipper updated from crew -- ' + skipname + ', ID: ' + str(skipid))
 			else:
 				sp_skid_e.config(state='normal')
 				sp_skid_e.delete(0, END)
@@ -1038,7 +1065,8 @@ def sailplanmenu(mywin, my_user):
 				crewqry = add_crew(1, 1, skipname, skipid, skipid)
 				crewlist = [x[1] for x in crewqry]
 				crew_tree = makecrewtree(crewqry, crew_tree, 0)
-			logger.info('Set Skipper ID function finished.')
+				logger.info('Skipper added -- ' + skipname + ', ID: ' + str(skipid))
+			#logger.info('Set Skipper ID function finished.')
 
 
 		def choosecrew(event):
@@ -1057,7 +1085,7 @@ def sailplanmenu(mywin, my_user):
 				crewlist = [x[1] for x in crewqry]
 				crew_tree = makecrewtree(crewqry, crew_tree, 0)
 			a_member_c.delete(0, END)
-			logger.info('Choose crew function finished.')
+			#logger.info('Choose crew function finished.')
 
 
 		def chooseguest(event):
@@ -1096,7 +1124,7 @@ def sailplanmenu(mywin, my_user):
 
 			db.commit()
 			db.close()
-			logger.info('Added to openspcrew table: ' + str(crewname))
+			logger.info('Sailplan ' + str(mysp_id) + ': Added to openspcrew table: ' + str(crewname) + ' ' + str(crewid))
 			return getcrewlist(mysp_id, '0')
 
 
