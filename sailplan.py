@@ -432,12 +432,12 @@ def sailplanmenu(mywin, my_user):
 						)
 						""")
 					# query to pull the data from the table
-					c.execute("""SELECT o_id, o_name, o_skipper, o_billtoid FROM openspcrew 
+					c.execute("""SELECT o_id, o_name, o_billtoid, o_skipper FROM openspcrew 
 						WHERE o_spid = :ospid ORDER BY o_name""", {'ospid': spid,})
 					# logger.info('Crew table queried for open sailplan ' + str(spid) + '.')
 				else:
 					# query to pull the data from the Ledger table
-					c.execute("""SELECT l_member_id, l_name, l_skipper_id, l_billto_id FROM Ledger 
+					c.execute("""SELECT l_member_id, l_name, l_billto_id, l_skipper FROM Ledger 
 						WHERE l_sp_id = :l_spid ORDER BY l_name""", {'l_spid': spid,})
 					# logger.info('Crew table queried for closed sailplan ' + str(spid) + '.')
 
@@ -1043,7 +1043,7 @@ def sailplanmenu(mywin, my_user):
 			skipname = skip_n_combo.get()
 			if skipname == '': return
 			skipid = float(id_dict[skipname])
-			if skipid in [x[2] for x in getcrewlist(mysp_id, '0')]:
+			if skipid in [x[3] for x in getcrewlist(mysp_id, '0')]:
 				logger.info('Tried to add a duplicate Skipper.')
 				sp_win.attributes('-topmost',0)
 				messagebox.showinfo('ENTRY ERROR!', 'That Skipper is already listed.')
