@@ -1017,6 +1017,16 @@ def ReportSummaryUse():
     messagebox.showinfo('', "Summary Boat usage report in folder: " + reportpath)
     
 def ReportMemberUse(mymonth, myyear):
+
+    #######################################################
+    #
+    #   This function produces the Month - Year Usage - Members.csv file
+    # 
+    # 2022/6/7 -- Fixed summary by member to account for total bill so 
+    #               that it sums to same value in teh charges file
+    #
+    #
+
     d = datetime.date(day=1, month=mymonth, year=myyear)
     month_list = ['January', 'February', 'March',
                     'April', 'May', 'June', 
@@ -1068,14 +1078,15 @@ def ReportMemberUse(mymonth, myyear):
         l_fee, l_sp_id, l_billto_id
         FROM Ledger 
         JOIN SailPlan ON Ledger.l_sp_id=SailPlan.sp_id
-        WHERE l_member_id != -1
         ORDER BY Ledger.l_date, Ledger.l_sp_id, Ledger.l_billto_id
         """)
         #
+        # 6/7 removed this from the query: WHERE l_member_id != -1
+        
         # Column assignments:
         # Date = 0 text
         # Boat = 1 text
-        # Member ID = 2 int
+        # Member ID = 2 int 
         # Member Name = 3 text
         # Ledger ID = 4 int
         # Description = 5 text
@@ -1093,7 +1104,7 @@ def ReportMemberUse(mymonth, myyear):
         # These next 4 rows write the header to the report
         w.writerow(["Report period: ", month_list[mymonth-1], myyear])
         w.writerow([" "])
-        w.writerow(["Sail Date", "Boat", "Member ID", "Member Name", "Ledger ID", "Purpose", 
+        w.writerow(["Sail Date", "Boat", "Bill to ID", "Member Name", "Ledger ID", "Purpose", 
             "Time Departed", "Time Returned", "Hours", "Member Fee"])
         w.writerow([" "])
 
@@ -1119,7 +1130,7 @@ def ReportMemberUse(mymonth, myyear):
 
         for record in usagetable:
             myrow = ([' ', ' ', 
-                str(record[2]), 
+                str(record[11]), 
                 str(record[3]), 
                 str(record[4]), 
                 str(record[5]),
