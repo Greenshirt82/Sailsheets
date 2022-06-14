@@ -1,0 +1,31 @@
+﻿Some testing notes from 20/11/2021 (Mike Basham):
+
+    1. Cancel and OK buttons overlay text on Release and Waiver of Liability screen.
+    2. Initial Sail Plan dialog box is too narrow to show all of the form.
+    3. Have to hit enter for the skipper to be added to the sail plan.
+    4. Does it make sense to have the "Check in" command on the screen where you create a sail plan? You haven't checked the boat out yet, so you can't check it in.
+    5. No error message or logic to prevent creating a sailplan for a boat that's already checked out.
+    6. When I checked out a boat and checked it back in before the time that it would start charging me, there was no "Time In" recorded and it looked like the sail plan was still active.
+    7. "Delete Sail Plan" allows me to delete an active sail plan with no warning or confirmation dialog box.
+    8. When a sail plan is selected, "Add Sail Plan" is deactivated.
+    9. Is it possible to select a date and have the sail plans display without clicking "Select Date?"
+    10. There's an Admin menu on the main sailplan page, but it is greyed out. Will it be possible to log in as Admin from this screen to adjust sail plan information?
+    11. Add Sail Plan window is not modal. If you click on the main sailsheets window it will overlay the Add Sail Plan window and user may not realize it is still active.
+        1. This happens when you check in a boat before the minimum time has expired. You get a message that "Sail less than minimum amount, no charge", and when you click OK, the sailplan is still active but in the background
+    12. Both Admin monthly reports did not display any data when I created them
+
+Corrections (as of 2/18/2022):
+    1. This is unique to the screen geometry.  I can fix but only in final deployment.
+    2. Again, unique to the screen geometry.
+    3. Fixed.  I disabled use of the Skipper’s Club # and simply forced use of the drop down for the Name.
+    4. Fixed – Disable the check in button until the sp is active (saved).  While CI button is disabled, rename save sail plan to check out & save sail plan.  Otherwise clicking this button creates an error condition.
+    5. Fixed – Revise boat list to show available boats.
+    6. Fixed? – This is working as expected.  The SP list shows a closed record and a time in.
+    7. Technically this is a feature of the current system and I’ve simply reproduced it – most members don’t use it.  Fixed – disabled this function except for admins.  If a record needs to be deleted, “check in” and send a note to the Treasurer.
+
+    8. Plan – need to add a deselect SP function on a second click.  Work around – select the date.
+
+    9. Fixed.  Turned out to be a simple fix.  I was using an event trigger incorrectly and did not realize it.
+    10. No.  For security reasons, You must log in as the ADMIN at initial log in. The app is the same however it checks to see if the user is the admin or just a member.  If I add code to allow admin login from within the app, then users have greater access to the raw data and code if they close the app. This also requires a lot of added code. The current app embeds the admin password in the code and anyone can access it.
+    11. Fixed – The Sail Plan window remains on top while open.  
+    12. Not able to reproduce the error.  Output is not to the screen but to a file.  The admin has to know where the files are located.  I can add a dialog box that notes the files are created and where located.
