@@ -37,7 +37,6 @@ def CreateChargesFile(mymonth, myyear):
                     '10', '11', '12']
 
     rpt_yr_mo = str(myyear) + '-' + month_list[mymonth-1]
-    #print(rpt_yr_mo)
     
     reportpath = './Transfer/' + str(myyear)
     p = Path(reportpath) 
@@ -48,7 +47,7 @@ def CreateChargesFile(mymonth, myyear):
     db = sqlite3.connect('Sailsheets.db')
     c = db.cursor()
 
-    c.execute("""SELECT l_billto_id, l_date, l_fee, l_description, l_account
+    c.execute("""SELECT l_billto_id, l_date, l_fee, l_description, l_account, ledger_id, l_name
         FROM Ledger 
         WHERE strftime('%Y-%m', l_date) == :rpt_date
         ORDER BY l_date, l_billto_id
@@ -65,13 +64,18 @@ def CreateChargesFile(mymonth, myyear):
 
     with open(myfilename, 'w', newline='') as f:
         w = csv.writer(f, dialect='excel')
-        w.writerow(["Member Number", "Charge Type", "Charge Date", "Dollar Amount", "Description", "Financial Account Name"])
-        
+ 
+        w.writerow(["Member Number", "Charge Type", "Charge Date", 
+            "Dollar Amount", "Description", "Financial Account Name"])
+
         for record in chargetable:
-        	if record[2] > 0:
-	            w.writerow([str(record[0]), "Charge", record[1][8:10] + '/' + record[1][5:7] + '/' + record[1][0:4], record[2], record[3], record[4]])
-    
+            # First, only look at ledger records with a fee 
+            if record[2] > 0:
+                w.writerow([str(record[0]), "Charge", 
+                    record[1][8:10] + '/' + record[1][5:7] + '/' + record[1][0:4], 
+                    record[2], str(record[5]) + ': ' + record[6] + ' - ' + record[3], record[4]])
+
     logger.info('Charges file ' + myfilename + ' written to transfer folder.')
 
 if __name__ == '__main__':
-    CreateChargesFile()
+    CreateChargesFile(5, 2022)

@@ -775,7 +775,7 @@ def sailplanmenu(mywin, my_user):
 						crew[0], 
 						crew[1],
 						crew[3],
-						sailplan[3] + ' - ' + sailplan[5],
+						sailplan[3] + ' Hrs:' + str(sailplan[8]) + ' - ' + sailplan[5],
 						0,
 						0,
 						crew[4],
@@ -929,6 +929,8 @@ def sailplanmenu(mywin, my_user):
 				
 				# total amount to be paid to MWR
 				#
+				#	Note: This is the place to figure out ASA payments.
+				#
 				if sailplan[3].lower() == 'skyline':
 					sailplan[11] = 0
 				else:
@@ -945,14 +947,14 @@ def sailplanmenu(mywin, my_user):
 				sailplan[10] = 0 	# total collected by NPSC
 				sailplan[11] = 0 	# total due to MWR
 
-			logger.info('Sailplan closed & written to ledger: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
-
 			# At this point we have:
 			# 1. sailplan list of fields that needs to be written to the sailplan table
 			# 2. Crew list of tuples w fees that needs to be written to the ledger
 			close_sailplan_record(sailplan)
 			write_fees_to_ledger(crewlist_w_fee, sailplan)
 			cleanup_open_data(myspid)
+
+			logger.info('Sailplan closed & written to ledger: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
 
 			# now close the window and return to the screen
 			sp_win.destroy()
