@@ -43,7 +43,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     if NPSCOnly == 1:
         myreportname = reportpath + '/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage - NPSC' + '.csv'
     else:
-        myreportname = reportpath + '/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage - MWR' + '.csv'
+        myreportname = reportpath + '/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage Fees Payable to MWR' + '.csv'
 
     #####################################################################
     # 
