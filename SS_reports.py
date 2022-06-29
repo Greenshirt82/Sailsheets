@@ -97,7 +97,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     if NPSCOnly == 1:
         c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, ledger_id, 
             l_date, l_member_id, l_name, l_skipper, SailPlan.sp_purpose AS purpose, Ledger.l_sp_id, 
-            SailPlan.sp_hours AS hours, SailPlan.sp_feesdue AS revenue
+            SailPlan.sp_hours AS hours, SailPlan.sp_mwrbilldue AS revenue
             FROM Ledger 
             JOIN SailPlan on Ledger.l_sp_id=SailPlan.sp_id
             JOIN Boats on SailPlan.sp_sailboat=Boats.boat_Name
@@ -107,7 +107,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     else:
         c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, ledger_id, 
             l_date, l_member_id, l_name, l_skipper, SailPlan.sp_purpose AS purpose, Ledger.l_sp_id, 
-            SailPlan.sp_hours AS hours, SailPlan.sp_feesdue AS revenue
+            SailPlan.sp_hours AS hours, SailPlan.sp_mwrbilldue AS revenue
             FROM Ledger 
             JOIN SailPlan on Ledger.l_sp_id=SailPlan.sp_id
             JOIN Boats on SailPlan.sp_sailboat=Boats.boat_Name
@@ -122,13 +122,17 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
         w = csv.writer(f, dialect='excel')
         w.writerow(["Report period: ", month_list[mymonth-1], myyear])
         w.writerow([" "])
+        #w.writerow([" ", "Note: The purpose of this report is to document amount payable to MWR from NPSC."])
+        #w.writerow([" ", " ", "Additionally, the last column should be used to spot check the charges file."])
+        #w.writerow([" "])
+        
         firstrecord = usagetable[0]
         boatclass = firstrecord[0]
         boat = firstrecord[1]
         boatpurpose = firstrecord[7]
         w.writerow(["Boat Class: " + str(boatclass)])
         w.writerow([" ", boat, "Ledger ID", "Date of sail", "Skipper ID", "Skipper", 
-            "Purpose", "Sailplan ID", "Hours", "Revenue"])
+            "Purpose", "Sailplan ID", "Hours", "Payable to MWR"])
         #w.writerow([" "])
         
         # Set the totals to zero 
@@ -183,7 +187,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
                 w.writerow([" "])
                 boatpurpose = record[7]
                 w.writerow([" ", boat, "Ledger ID", "Date of sail", "Skipper ID", "Skipper", 
-                    "Purpose", "Sailplan ID", "Hours", "Revenue"])
+                    "Purpose", "Sailplan ID", "Hours", "Payable to MWR"])
                 
                 hrs_purpose_total = record[9]
                 hrs_boat_total += record[9]
@@ -212,7 +216,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
                 boat = record[1]
                 boatpurpose = record[7]
                 w.writerow([" ", boat, "Ledger ID", "Date of sail", "Skipper ID", "Skipper", 
-                    "Purpose", "Sailplan ID", "Hours", "Revenue"])
+                    "Purpose", "Sailplan ID", "Hours", "Payable to MWR"])
                 #
                 hrs_purpose_total = record[9]
                 hrs_boat_total = record[9]
@@ -247,7 +251,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
                 
                 w.writerow(["Boat Class: " + str(boatclass)])
                 w.writerow([" ", boat, "Ledger ID", "Date of sail", "Skipper ID", "Skipper", 
-                    "Purpose", "Sailplan ID", "Hours", "Revenue"])
+                    "Purpose", "Sailplan ID", "Hours", "Payable to MWR"])
 
                 hrs_purpose_total = record[9]
                 hrs_boat_total = record[9]
@@ -267,7 +271,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
             str(round(revenue_class_total, 2))])
         w.writerow([" "])
         w.writerow([" ", " ", " ", " ", " ", " ", " ", "Grand Total:", str(round(hrs_grand_total,1)), 
-            str(round(revenue_grand_total, 2))])
+            str(round(revenue_grand_total, 2)), "<-- Payable to MWR before maintenance deductions."])
         w.writerow([" "])
 
     db.commit()
@@ -1023,7 +1027,7 @@ def ReportMemberUse(mymonth, myyear):
     #   This function produces the Month - Year Usage - Members.csv file
     # 
     # 2022/6/7 -- Fixed summary by member to account for total bill so 
-    #               that it sums to same value in teh charges file
+    #               that it sums to same value in the charges file
     #
     #
 
@@ -1039,7 +1043,7 @@ def ReportMemberUse(mymonth, myyear):
     if not Path(reportpath).exists():
         p.mkdir(parents=True)
 
-    myreportname =  './Reports/' + str(d.year) +'/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage - Members' + '.csv'
+    myreportname =  './Reports/' + str(d.year) +'/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Fees Payable from Members' + '.csv'
 
     db = sqlite3.connect('Sailsheets.db')
     c = db.cursor()
