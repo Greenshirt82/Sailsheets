@@ -10,6 +10,9 @@ import sqlite3
 import datetime as dt
 from datetime import timedelta
 
+# modules used
+import SS_Email_Functions
+
 # Set up the logging system
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -767,6 +770,47 @@ def sailplanmenu(mywin, my_user):
 				db.commit()
 				db.close()
 
+				# Ledger schema
+				#
+				#	0, ledger_id int
+				#	1, l_date text
+				#	2, l_member_id int
+				#	3, l_name text
+				#	4, l_skipper int
+				#	5, l_description text
+				#	6, l_mwrvol int
+				#	7, l_clubvol int
+				#	8, l_billto_id int
+				# 	9, l_fee real
+				#	10, l_account text
+				#	11, l_sp_id int
+				#	12, l_uploaddate text
+
+				# Sailplan schema
+				#	0. sp_id INTEGER PRIMARY KEY, 
+				#	1, sp_timeout text,
+				#	2, sp_skipper_id real,
+				#	3, sp_sailboat text,
+				#	4, sp_purpose text,
+				#	5, sp_description text,
+				#	6, sp_estrtntime text,
+				#	7, sp_timein text,
+				#	8, sp_hours real,
+				#	9, sp_feeeach real,
+				#	10, sp_feesdue real,
+				#	11, sp_mwrbilldue real,
+				#	12, sp_billmembers int,
+				#	13, sp_completed int);
+
+				# Crewlist schema
+				#	0, o_id real, 
+                #   1, o_name text,
+                #   2, o_spid int,
+                #   3, o_skipper int,
+                #   4, o_billtoid real
+                #	5, crewfee # Note: calculated and passed as part of crewlist to this function
+
+
 				for crew in crewlist:
 					logger.info(str(last_id) + ': added to ledger')
 					last_id += 1
@@ -839,7 +883,7 @@ def sailplanmenu(mywin, my_user):
 			crewlist = get_crew_list(myspid)
 			#print('Crew List of tuples:', '\n', crewlist)
 
-			if purpose_fees[3] == 'Fixed':
+			if purpose_fees[3].lower() == 'fixed':
 				crewlist_w_fee = []
 				is_club_ops = purpose_fees[6] 	# 0 = no, 1 = yes
 
@@ -876,7 +920,7 @@ def sailplanmenu(mywin, my_user):
 				#
 				sailplan[11] = round(best_rate, 2)
 
-			elif purpose_fees[3] == 'Hourly':
+			elif purpose_fees[3].lower() == 'hourly':
 				# create a new list and append the old list of tuples
 				# but with a computed fee for each crewmember
 				# later this will be summed by billtoid to figure out
@@ -890,7 +934,7 @@ def sailplanmenu(mywin, my_user):
 				for crew in crewlist:
 					# get member details to determine proper rate
 					crew_details = get_member_details(crew[4])
-					if crew_details[4] == 'E-5 & Below':
+					if crew_details[4].lower() == 'e-5 & below':
 						hour_col = 5
 						daily_col = 6
 					else:
@@ -953,6 +997,7 @@ def sailplanmenu(mywin, my_user):
 			close_sailplan_record(sailplan)
 			write_fees_to_ledger(crewlist_w_fee, sailplan)
 			cleanup_open_data(myspid)
+			SS_Email_Functions.sailplan_closed_email(sailplan)
 
 			logger.info('Sailplan closed & written to ledger: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
 
