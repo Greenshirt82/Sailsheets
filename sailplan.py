@@ -855,42 +855,62 @@ def sailplanmenu(mywin, my_user):
 			# Query the sail plan from the table
 			sailplan = list(get_sailplan_df(myspid))
 			
+			# Set the sailplan check in time as the current date/time
 			sailplan[7] = checkin_dt
+
+			# Convert the checkout and checkin times to numbers & compute the difference
 			dt_checkin = dt.datetime.strptime(checkin_dt, '%Y-%m-%d %H:%M:%S')
 			dt_timeout = dt.datetime.strptime(sailplan[1], '%Y-%m-%d %H:%M:%S')
 			time_delta = (dt_checkin - dt_timeout) 
 			minutes_sailed = time_delta.total_seconds()/60
 			hours_sailed = time_delta.total_seconds()/60/60
-			#print('\n', 'My time delta in hours: ', round(hours_sailed, 2), '\n')
+
+			# get the fee purpose (fixed, hourly, etc)
+			purpose_fees = get_purpose_fees(sailplan[4])
 			
+			# Set the sailplan value to the hours sailed
+			sailplan[8] = round(hours_sailed, 1)
+			sailplan[13] = 1
+
 			# first, check if the rental was less than the grace period
 			# 
 			grace_period = get_settings()[1]
-			#print('Minutes: ', minutes_sailed, '\n', 'Grace: ', grace_period, '\n')
-			purpose_fees = get_purpose_fees(sailplan[4])
-			
+
+			# If less than grace period then send a message and set the fees value.
 			if minutes_sailed <= float(grace_period):
 				sp_win.attributes('-topmost',0)
 				messagebox.showinfo('', 'Sail less than minimum amount, no charge.')
 				sp_win.attributes('-topmost',1)
 				logger.info('Sailplan less than minimum amount, no charge: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
-				purpose_fees[3] = 'Not minimum sail'	
-				
-			sailplan[8] = round(hours_sailed, 1)
-			sailplan[13] = 1
-			
+				purpose_fees[3] = 'Not minimum sail'
+				sailplan[8] = 0	
+
 			boat_rates = get_boat_rates(sailplan[3])
 			crewlist = get_crew_list(myspid)
-			#print('Crew List of tuples:', '\n', crewlist)
 
+			# Now calculate the fees paid to the Club based on the purpose_fee.
+			#
+			# Options from the purpose table are fixed, hourly, or free.
+			#
+			# Please note that while Club collects a fixed fee from the members,
+			#	the Club must pay the rental rate for the boat to MWR.
 			if purpose_fees[3].lower() == 'fixed':
+				# This is a fixed price event, eg Social Sail
 				crewlist_w_fee = []
 				is_club_ops = purpose_fees[6] 	# 0 = no, 1 = yes
 
 				# collect the fixed rate from the purpose table
+				# 
+				# if the fixed rate is zero in the table, this just means the billing will
+				#	be recorded via Club Express, not via Sailsheets.  Example is ASA training fees.
+				#
+				#	sailplan[9] = sp_feeeach
 				#
 				sailplan[9] = round(purpose_fees[2], 2)
 				
+				# Loop throuth the crew list and set the fee each may have to pay.  Club Ops Skipper = 0
+				#	and others may pay zero as well e.g. E-5 & Below in small boats
+				#
 				for crew in crewlist:
 					# Club Ops Skippers paid by the Club
 					#
@@ -902,23 +922,39 @@ def sailplanmenu(mywin, my_user):
 					crewlist_w_fee.append(crew_w_fee)
 				
 				# multiply total crew times fixed fee each = total collected
-				# note for ASA classes this will be zero and are collected
-				# separately when scheduled.
+				# note for ASA classes this will be zero per rate table and 
+				# are collected separately when scheduled.
+				#
+				#	sailplan[10] = sp_feesdue = collected by the Club
 				#
 				sailplan[10] = round(sailplan[12]*purpose_fees[2], 2) 
 				
-				# find the best rate
+				# Now calculate what the Club owes MWR.
 				#
-				if hours_sailed % 24 * boat_rates[7] > boat_rates[8]: 
-					best_rate = (1 - get_settings()[0]/100) * (
-						((hours_sailed // 24 + 1) * boat_rates[8]))
-				else: 
-					best_rate = (1 - get_settings()[0]/100) * (
-						(hours_sailed % 24 * boat_rates[7]) + 
-						(hours_sailed // 24 * boat_rates[8]))
-				# total amount to be paid to MWR
+				#	
 				#
-				sailplan[11] = round(best_rate, 2)
+				if hours_sailed // 24 > 0: # check if sail is multi day, >0 = yes, 0 = no
+					# if multi day sail, compute as "discount x daily rate x 1st day + rest of days/2"
+					# it looks complicated but example:
+					# 125 hours on yawl @ $247 daily rate, total sail = 5 full days and a 6th partial day
+					# 1 day = $247
+					# 5 remaining days @ half daily rate = 5x 247x 0.5 = $ 617.50
+					# Base cost of sail = $247 + $617.50 = $864.50
+					# Apply discount of 10% --- $864.50 x 90% = $778.05 
+					# 
+					# Total multi day sail cost to member(s) is $778.05
+					#
+					mwr_fee = (1 - get_settings()[0]/100) * (boat_rates[8]
+						* ((1 + ((hours_sailed // 24)-1) * .5))
+						+ (hours_sailed % 24)*.5)
+				else: # less than 1 day
+					if hours_sailed * boat_rates[7] > boat_rates[8]: # compare hourly cost to daily cost
+						mwr_fee = (((1 - get_settings()[0]/100) 
+							* boat_rates[8]) * (1 + ((hours_sailed // 24) * .5)))
+					else: 
+						mwr_fee = (1 - get_settings()[0]/100) * hours_sailed * boat_rates[7]				# total amount to be paid to MWR
+				
+				sailplan[11] = round(mwr_fee, 2)
 
 			elif purpose_fees[3].lower() == 'hourly':
 				# create a new list and append the old list of tuples
@@ -933,6 +969,12 @@ def sailplanmenu(mywin, my_user):
 
 				for crew in crewlist:
 					# get member details to determine proper rate
+					#
+					# Note: some boats are free for E-5 & below use
+					#	This will show up as a zero rate value in the rates table, not here.
+					#	When it sums the MWR Bill, it will add a zero, so the Club does not
+					# 	pay for E-5 & Below.
+					#
 					crew_details = get_member_details(crew[4])
 					if crew_details[4].lower() == 'e-5 & below':
 						hour_col = 5
@@ -941,17 +983,31 @@ def sailplanmenu(mywin, my_user):
 						hour_col = 7
 						daily_col = 8
 
+					# find the best rate daily vs hourly for less than 1 day
 					#
-					# find the best rate
-					#
-					if hours_sailed % 24 * boat_rates[hour_col] > boat_rates[daily_col]: 
-						crewfee = ((1 - get_settings()[0]/100) * (
-							((hours_sailed // 24 + 1) * boat_rates[daily_col]))) / sailplan[12]
-					else: 
-						crewfee = ((1 - get_settings()[0]/100) * (
-							(hours_sailed % 24 * boat_rates[hour_col]) + 
-							(hours_sailed // 24 * boat_rates[daily_col]))) / sailplan[12]
-					
+					if hours_sailed // 24 > 0: # check if sail is multi day
+						# if multi day sail, compute as "discount x daily rate x 1st day + rest of days/2"
+						# it looks complicated but example:
+						# 125 hours on yawl @ $247 daily rate, total sail = 5 full days and a 6th partial day
+						# 1 day = $247
+						# 5 remaining days @ half daily rate = 5x 247x 0.5 = $ 617.50
+						# Base cost of sail = $247 + $617.50 = $864.50
+						# Apply discount of 10% --- $864.50 x 90% = $778.05 
+						# 
+						# Total multi day sail cost to member(s) is $778.05
+						#
+						crewfee = (1 - get_settings()[0]/100) * (boat_rates[daily_col]
+							* ((1 + ((hours_sailed // 24)-1) * .5) / sailplan[12])
+							+ (hours_sailed % 24)*.5)
+					else: # less than 1 day
+						if hours_sailed * boat_rates[hour_col] > boat_rates[daily_col]: 
+							# hourly cost more than daily cost
+							crewfee = (((1 - get_settings()[0]/100) # discount
+								* boat_rates[daily_col]) / sailplan[12]) 
+						else: # hourly cost less than daily cost
+							crewfee = ((1 - get_settings()[0]/100) # discount
+								* hours_sailed * boat_rates[hour_col] / sailplan[12])
+
 					# Club Ops Skippers paid by the Club
 					#
 					if is_club_ops == 1 and crew[3] == 1: 
@@ -962,7 +1018,8 @@ def sailplanmenu(mywin, my_user):
 
 					crewlist_w_fee.append(crew_w_fee)
 					mwr_bill += crewfee
-				
+				# end of for loop
+
 				# fee per person
 				#
 				sailplan[9] = round(total_fees/sailplan[12], 2)
@@ -973,14 +1030,12 @@ def sailplanmenu(mywin, my_user):
 				
 				# total amount to be paid to MWR
 				#
-				#	Note: This is the place to figure out ASA payments.
-				#
 				if sailplan[3].lower() == 'skyline':
 					sailplan[11] = 0
 				else:
 					sailplan[11] = round(mwr_bill, 2)
 			else:
-				# this would be a free event
+				# this would be a free MWR event
 				#
 				crewlist_w_fee = []
 				for crew in crewlist:
