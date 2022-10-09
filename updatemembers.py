@@ -47,7 +47,8 @@ def UpdateMembers(allmembersfile):
         m_status text,
         m_expdate text,
         m_type text,
-        m_prime text)
+        m_prime text, 
+        m_email text)
         """)
 
     # Open the AllMembers csv file and put the data into memory
@@ -58,7 +59,8 @@ def UpdateMembers(allmembersfile):
             i['status'],
             i['date_expired'],
             i['membership_type'],
-            i['primary_member']) for i in r]
+            i['primary_member'],
+            i['primary_email']) for i in r]
 
     # insert each record into the new table
     c.executemany("""INSERT INTO UpdateMembers (m_id, 
@@ -66,9 +68,10 @@ def UpdateMembers(allmembersfile):
         m_status, 
         m_expdate, 
         m_type, 
-        m_prime
+        m_prime,
+        m_email
         )
-        VALUES (?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?);
         """, to_db)
 
     # Remove some records we know get pulled down.
