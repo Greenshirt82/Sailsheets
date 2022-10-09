@@ -1026,7 +1026,12 @@ def sailplanmenu(mywin, my_user):
 				
 				# total fee to be collected
 				#
-				sailplan[10] = round(total_fees, 2)
+				# 10/9/2022 -- temporary fix to collect higher rates for yawls
+				#
+				if sailplan[3].lower() in 'arctic tern-blue goose-shearwater-stormy petrel':
+					sailplan[10] = round(1.05*total_fees/.9, 2)
+				else:
+					sailplan[10] = round(total_fees, 2)
 				
 				# total amount to be paid to MWR
 				#
