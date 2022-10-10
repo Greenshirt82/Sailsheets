@@ -1008,6 +1008,11 @@ def sailplanmenu(mywin, my_user):
 							crewfee = ((1 - get_settings()[0]/100) # discount
 								* hours_sailed * boat_rates[hour_col] / sailplan[12])
 
+					# 10/9/2022 -- temporary fix to collect higher rates for yawls
+					#
+					if sailplan[3].lower() in 'arctic tern-blue goose-shearwater-stormy petrel':
+						crewfee = 1.05*crewfee/.9
+
 					# Club Ops Skippers paid by the Club
 					#
 					if is_club_ops == 1 and crew[3] == 1: 
@@ -1017,7 +1022,10 @@ def sailplanmenu(mywin, my_user):
 						total_fees += crewfee
 
 					crewlist_w_fee.append(crew_w_fee)
-					mwr_bill += crewfee
+					if sailplan[3].lower() in 'arctic tern-blue goose-shearwater-stormy petrel':
+						mwr_bill += .9*crewfee/1.05
+					else:
+						mwr_bill += crewfee
 				# end of for loop
 
 				# fee per person
@@ -1026,12 +1034,7 @@ def sailplanmenu(mywin, my_user):
 				
 				# total fee to be collected
 				#
-				# 10/9/2022 -- temporary fix to collect higher rates for yawls
-				#
-				if sailplan[3].lower() in 'arctic tern-blue goose-shearwater-stormy petrel':
-					sailplan[10] = round(1.05*total_fees/.9, 2)
-				else:
-					sailplan[10] = round(total_fees, 2)
+				sailplan[10] = round(total_fees, 2)
 				
 				# total amount to be paid to MWR
 				#
