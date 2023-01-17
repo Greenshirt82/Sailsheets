@@ -9,7 +9,9 @@ from tkinter import filedialog
 from tkinter import ttk
 from tkinter import messagebox
 import datetime 
+from datetime import timedelta, datetime
 from pathlib import Path
+import os
 import csv
 import logging
 import sqlite3
@@ -71,7 +73,9 @@ def export_excel():
 # Future version will figure out the date of the file and if less
 # than 5 days not make a backup.
 #
-today = datetime.date.today()
+DateNow = datetime.now()
+today = datetime.today()
+delta = timedelta(days=5)
 
 backuppath = './Backups/' + str(today.year)
 p = Path(backuppath) 
@@ -79,11 +83,15 @@ p = Path(backuppath)
 if not Path(backuppath).exists():
     p.mkdir(parents=True)
 
-if Path(backuppath + '/' + str(today) + '_' + 'Backup.db').is_file():
+files = os.listdir(p)
+paths = [os.path.join(p, basename) for basename in files]
+MostRecentFile = os.path.basename(max(paths, key = os.path.getctime))
+
+if DateNow - delta <= datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))):
     logger.info('Recent backup file exists.')
 else:
     logger.info('Backup file started.')
     primedb = sqlite3.connect('Sailsheets.db')
-    backupdb = sqlite3.connect(backuppath + '/' + str(today) + '_' + 'Backup.db')
+    backupdb = sqlite3.connect(backuppath + '/' + str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db')
     primedb.backup(backupdb)
     logger.info('Backup file completed.')
