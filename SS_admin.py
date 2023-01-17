@@ -160,7 +160,7 @@ def monthly_reports(mywin):
 		mymonth = month_list.index(mo_combo.get()) + 1
 		myyear = thisyear - years_list.index(yr_combo.get())
 
-		Report1 = SS_reports.ReportUsage(mymonth, myyear, 1)
+		#Report1 = SS_reports.ReportUsage(mymonth, myyear, 1)
 		Report2 = SS_reports.ReportUsage(mymonth, myyear, 0)
 		Report3 = SS_reports.ReportMemberUse(mymonth, myyear)
 		ChargesFile = SS_Create_Charges_File.CreateChargesFile(mymonth, myyear)
