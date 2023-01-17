@@ -12,6 +12,7 @@ from datetime import timedelta
 
 import smtplib
 from email.message import EmailMessage
+import os
 
 # Set up the logging system
 logger = logging.getLogger(__name__)
@@ -48,6 +49,38 @@ def send_email(em_address, em_subject, em_body):
 	s.quit()
 	logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
 	return
+
+def send_reports(files=[]):
+    """Compose and send email with provided info and attachments.
+
+    Args:
+        send_from (str): from name
+        send_to (list[str]): to name(s)
+        subject (str): message title
+        message (str): message body
+        files (list[str]): list of file paths to be attached to email
+    """
+    em_subject = 'NPSC Club Computer Monthly Reports'
+    em_address = 'treas@navypaxsail.com'
+
+    msg = EmailMessage()
+
+    msg['From'] = 'npsc.sailor@gmail.com'
+    msg['To'] = em_address
+    msg['Cc'] = 'comm@navypaxsail.com'
+    msg['Subject'] = em_subject
+
+    msg.set_content('Monthly Reports','plain')
+
+    for path in files:
+        with open(path, 'rb') as file:
+            csv_data = file.read()
+        msg.add_attachment(csv_data, maintype='text', subtype='csv', filename=os.path.basename(path))
+
+    with smtplib.SMTP('localhost') as s:
+        s.send_message(msg)
+    #s.quit()
+    logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
 
 def sailplan_closed_email(sailplan_df):
 	# df has format of:
@@ -104,11 +137,10 @@ def sailplan_closed_email(sailplan_df):
 def sailplan_open_email(sailplan_df):
 	return
 
-def reports_email(MWRPayableFile, ClubUsageFile, SailplanFile, LedgerFile):
-	return
-
 def member_email(ledgerid, sailplanid):
 	return
 
 if __name__ == '__main__':
-    send_email('npsc.sailor@gmail.com', 'Test email subject', 'This is just a test of the smtp library for Sailsheets.')
+    # send_email('npsc.sailor@gmail.com', 'Test email subject', 'This is just a test of the smtp library for Sailsheets.')
+    my_files = ['./Reports/2022/September 2022 Usage Fees Payable to MWR.csv', './Reports/2022/September 2022 Fees Payable from Members.csv']
+    send_reports(my_files)
