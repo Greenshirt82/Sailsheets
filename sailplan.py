@@ -12,6 +12,7 @@ from datetime import timedelta
 
 # modules used
 import SS_Email_Functions
+import checkreports
 
 # Set up the logging system
 logger = logging.getLogger(__name__)
