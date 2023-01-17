@@ -41,9 +41,9 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
         p.mkdir(parents=True)
 
     if NPSCOnly == 1:
-        myreportname = reportpath + '/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage - NPSC' + '.csv'
+        myreportname = reportpath + '/' + str(d.year) + ' ' + month_list[mymonth-1] + ' Usage - NPSC' + '.csv'
     else:
-        myreportname = reportpath + '/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Usage Fees Payable to MWR' + '.csv'
+        myreportname = reportpath + '/' + str(d.year) + ' ' + month_list[mymonth-1] + ' Usage Fees Payable to MWR' + '.csv'
 
     #####################################################################
     # 
@@ -277,10 +277,10 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     db.commit()
     db.close()
     logger.info('Executed reportusage ' + str(NPSCOnly) + ' (1=NPSC only)')
-    if NPSCOnly == 1:
-        messagebox.showinfo('', "NPSC Boat usage report in folder: " + reportpath)
-    else:
-        messagebox.showinfo('', "MWR Boat usage report in folder: " + reportpath)
+    # if NPSCOnly == 1:
+    #     messagebox.showinfo('', "NPSC Boat usage report in folder: " + reportpath)
+    # else:
+    #     messagebox.showinfo('', "MWR Boat usage report in folder: " + reportpath)
 
 def ReportDetailUse():
     
@@ -660,7 +660,7 @@ def ReportDetailUse():
     db.commit()
     db.close()
     logger.info('Executed ReportDetailUse ')
-    messagebox.showinfo('', "Detailed Boat usage report in folder: " + reportpath)
+    # messagebox.showinfo('', "Detailed Boat usage report in folder: " + reportpath)
     
 def ReportSummaryUse():
     
@@ -1043,7 +1043,7 @@ def ReportMemberUse(mymonth, myyear):
     if not Path(reportpath).exists():
         p.mkdir(parents=True)
 
-    myreportname =  './Reports/' + str(d.year) +'/' + month_list[mymonth-1] + ' ' + str(d.year) + ' Fees Payable from Members' + '.csv'
+    myreportname =  './Reports/' + str(d.year) +'/' + str(d.year) + ' ' + month_list[mymonth-1] + ' Fees Payable from Members' + '.csv'
 
     db = sqlite3.connect('Sailsheets.db')
     c = db.cursor()
@@ -1205,7 +1205,7 @@ def ReportMemberUse(mymonth, myyear):
     db.commit()
     db.close()
     logger.info('Executed ReportMemberUse report.')
-    messagebox.showinfo('', "Member Usage report in folder: " + reportpath)
+    # messagebox.showinfo('', "Member Usage report in folder: " + reportpath)
 
 def MemberUseLog(member_id):
     
