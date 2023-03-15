@@ -86,5 +86,3 @@ def UpdateMembers(allmembersfile):
     # Commit the changes to the db and then close the db
     db.commit()
     db.close()
-
-

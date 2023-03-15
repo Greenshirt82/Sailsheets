@@ -277,6 +277,8 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     db.commit()
     db.close()
     logger.info('Executed reportusage ' + str(NPSCOnly) + ' (1=NPSC only)')
+    return myreportname
+
     # if NPSCOnly == 1:
     #     messagebox.showinfo('', "NPSC Boat usage report in folder: " + reportpath)
     # else:
@@ -1205,6 +1207,7 @@ def ReportMemberUse(mymonth, myyear):
     db.commit()
     db.close()
     logger.info('Executed ReportMemberUse report.')
+    return myreportname
     # messagebox.showinfo('', "Member Usage report in folder: " + reportpath)
 
 def MemberUseLog(member_id):

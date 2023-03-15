@@ -41,7 +41,7 @@ def send_email(em_address, em_subject, em_body):
 	msg['Subject'] = em_subject
 	msg['From'] = 'npsc.sailor@gmail.com'
 	msg['To'] = em_address
-	msg['Bcc'] = 'comm@navypaxsail.com, treas@navypaxsail.com'
+	#msg['Bcc'] = 'comm@navypaxsail.com, treas@navypaxsail.com'
 
 
 	s = smtplib.SMTP('localhost')
@@ -62,6 +62,8 @@ def send_reports(files=[]):
     """
     em_subject = 'NPSC Club Computer Monthly Reports'
     em_address = 'treas@navypaxsail.com'
+    #em_subject = "Test CRON reporting"
+    #em_address = 'greenshirt82@gmail.com'
 
     msg = EmailMessage()
 

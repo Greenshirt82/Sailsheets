@@ -42,7 +42,7 @@ else:
     ReportYear = Today.year
     MonthNum = Today.month - 1
 
-ReportMonth = MonthList[MonthNum]
+ReportMonth = MonthList[MonthNum-1]
 
 ReportPath = './Reports/' + str(ReportYear)
 p = Path(ReportPath) 
@@ -55,14 +55,14 @@ if Path(ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Fees Pay
 else:
     logger.info('Report files started.')
     
-    Report1 = SS_reports.ReportUsage(MonthNum + 1, ReportYear, 0)
-    Report2 = SS_reports.ReportMemberUse(MonthNum + 1, ReportYear)
+    Report1 = SS_reports.ReportUsage(MonthNum, ReportYear, 0)
+    Report2 = SS_reports.ReportMemberUse(MonthNum, ReportYear)
     # ChargesFile = SS_Create_Charges_File.CreateChargesFile(mymonth, myyear)
 
     logger.info('Reports for ' + ReportMonth + '-' + str(ReportYear) + ' created.')
 
     logger.info('Emailing reports just created.')
-    PayableReport = ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Fees Payable from Members.csv'
-    MWRReport = ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Usage Fees Payable to MWR.csv'
-    SS_Email_Functions.send_reports([PayableReport, MWRReport])
+#    PayableReport = ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Fees Payable from Members.csv'
+#    MWRReport = ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Usage Fees Payable to MWR.csv'
+    SS_Email_Functions.send_reports([Report1, Report2])
     logger.info('Reports emailed.')

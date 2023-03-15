@@ -10,6 +10,7 @@ from datetime import timedelta
 
 import SS_reports
 import SS_Create_Charges_File
+import SS_Email_Functions
 import updatemembers
 
 # Set up the logging system
@@ -169,6 +170,9 @@ def monthly_reports(mywin):
 		mo_combo.pack_forget()
 		yr_combo.pack_forget()
 		accept_btn.pack_forget()
+		logger.info('Emailing reports just created.')
+		SS_Email_Functions.send_reports([Report2, Report3])
+		logger.info('Reports emailed.')
 
 	#first, clear any frames that may be on the screen
 	clear_all_frames(mywin)
@@ -183,7 +187,7 @@ def monthly_reports(mywin):
 	thisyear = todaysdate.year
 	years_list = [str(thisyear), str(thisyear-1), str(thisyear-2), str(thisyear-3)]
 	mo_combo = ttk.Combobox(mywin, value=month_list)
-	mo_combo.current(thismonth-1)
+	mo_combo.current(thismonth-2)
 	mo_combo.pack(pady=10)
 	yr_combo = ttk.Combobox(mywin, value=years_list)
 	yr_combo.current(0)
