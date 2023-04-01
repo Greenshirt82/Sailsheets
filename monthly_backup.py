@@ -21,7 +21,7 @@ from email.message import EmailMessage
 # Set up the logging system
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-filename = os.path.join(dir_path, Path(__file__).stem + '.log')
+filename = os.path.join(dir_path, 'sailsheets.log')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

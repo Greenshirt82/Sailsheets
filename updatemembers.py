@@ -1,7 +1,19 @@
+import logging
 import sqlite3
 import datetime 
 from datetime import date
 import csv
+import os
+
+# Set up the logging system
+dir_path = os.path.dirname(os.path.realpath(__file__))
+filename = os.path.join(dir_path, 'sailsheets.log')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+file_handler = logging.FileHandler(filename)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 def UpdateMembers(allmembersfile):
     #####################################################################
@@ -86,3 +98,4 @@ def UpdateMembers(allmembersfile):
     # Commit the changes to the db and then close the db
     db.commit()
     db.close()
+    logger.info('updatemembers function completed.')

@@ -18,7 +18,7 @@ import SS_Email_Functions
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-file_handler = logging.FileHandler(__name__ + '.log')
+file_handler = logging.FileHandler('sailsheets.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -267,7 +267,7 @@ def sailplanmenu(mywin, my_user):
 
 		# Grab record values
 		values = my_tree.item(selected, 'values')
-		logger.info('_record function called.')
+		logger.info(__name__ + ':_record function called.')
 		return [values[0], values[9]]
 
 		
@@ -371,17 +371,9 @@ def sailplanmenu(mywin, my_user):
 				#print('Event Key: ', event.keysym)
 				if event.keysym == "Return": #or event.keysym == "Tab":
 					if str(self) == '.!labelframe3.!autocompletecombobox':
-						#logger.info(str(self) + ': Crew added using ' + event.keysym)
 						choosecrew(event)
 					elif str(self) == '.!labelframe2.!autocompletecombobox2':
-						#logger.info(str(self) + ': Skipper added using ' + event.keysym)
 						set_skipper_id(event)
-					# elif str(self) == '.!labelframe1.!autocompletecombobox':
-					# 	logger.info(str(self) + ':  added using ' + event.keysym)
-					# elif str(self) == '.!labelframe2.!autocompletecombobox':
-					# 	logger.info(str(self) + ': Boat added using ' + event.keysym)
-					# else: 
-					# 	logger.info(str(self) + ': Nothing added' + event.keysym)
 				if event.keysym == "BackSpace":
 					self.delete(self.index(INSERT), END)
 					self.position = self.index(END)
@@ -438,12 +430,10 @@ def sailplanmenu(mywin, my_user):
 					# query to pull the data from the table
 					c.execute("""SELECT o_id, o_name, o_billtoid, o_skipper FROM openspcrew 
 						WHERE o_spid = :ospid ORDER BY o_name""", {'ospid': spid,})
-					# logger.info('Crew table queried for open sailplan ' + str(spid) + '.')
 				else:
 					# query to pull the data from the Ledger table
 					c.execute("""SELECT l_member_id, l_name, l_billto_id, l_skipper FROM Ledger 
 						WHERE l_sp_id = :l_spid ORDER BY l_name""", {'l_spid': spid,})
-					# logger.info('Crew table queried for closed sailplan ' + str(spid) + '.')
 
 				# fetch the data
 				crewqry = c.fetchall()
@@ -586,7 +576,7 @@ def sailplanmenu(mywin, my_user):
 				sp_win.attributes('-topmost',0)
 				messagebox.showinfo('ENTRY ERROR!', "No boat listed!")
 				sp_win.attributes('-topmost',1)
-				logger.info('Skipper forgot to choose a boat.')
+				logger.info(__name__ + ':Skipper forgot to choose a boat.')
 				return
 			elif boat_combo.get() in validboatlist:
 				logger.info('Skipper taking ' + boat_combo.get())
@@ -606,7 +596,7 @@ def sailplanmenu(mywin, my_user):
 					return
 				else:
 					set_skipper_id(0)
-					logger.info("Sailplan # " + str(myspid) + ' added. ' + 
+					logger.info('Sailplan # ' + str(myspid) + ' added. ' + 
 						'Skipper: ' + str(sp_skid_e.get()) + ' ' + skip_n_combo.get())
 			
 
@@ -813,7 +803,7 @@ def sailplanmenu(mywin, my_user):
 
 
 				for crew in crewlist:
-					logger.info(str(last_id) + ': added to ledger')
+					logger.info('' +str(last_id) + ': added to ledger')
 					last_id += 1
 					ledgerentry = (last_id, 
 						sailplan[1][0:10], 
@@ -1177,7 +1167,6 @@ def sailplanmenu(mywin, my_user):
 				crewlist = [x[1] for x in crewqry]
 				crew_tree = makecrewtree(crewqry, crew_tree, 0)
 				logger.info('Skipper added -- ' + skipname + ', ID: ' + str(skipid))
-			#logger.info('Set Skipper ID function finished.')
 
 
 		def choosecrew(event):
@@ -1196,7 +1185,6 @@ def sailplanmenu(mywin, my_user):
 				crewlist = [x[1] for x in crewqry]
 				crew_tree = makecrewtree(crewqry, crew_tree, 0)
 			a_member_c.delete(0, END)
-			#logger.info('Choose crew function finished.')
 
 
 		def chooseguest(event):
@@ -1303,7 +1291,6 @@ def sailplanmenu(mywin, my_user):
 			edit_state = 'normal'
 			add_state = 'normal'
 			new = 0
-			#logger.info('Sailplan ' + str(mysp_id) + ' edited.')
 
 		if mysp_id == -1:
 			w_header = "Navy Patuxent Sailing Club"

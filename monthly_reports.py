@@ -25,7 +25,7 @@ import SS_reports
 
 # Set up the logging system
 dir_path = os.path.dirname(os.path.realpath(__file__))
-filename = os.path.join(dir_path, __name__+'.log')
+filename = os.path.join(dir_path, 'sailsheets.log')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
