@@ -57,7 +57,7 @@ def send_reports(em_subject='', files=[]):
     with smtplib.SMTP('localhost') as s:
         s.send_message(msg)
     #s.quit()
-    logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
+    logger.info('Email subject: ' + em_subject + '; sent to Treasurer and Commodore')
 
 # This next bit of code simply figures out which month should be reported.  
 #	The reports are always last month's reports.  To run a report for an
@@ -84,6 +84,7 @@ ReportMonth = MonthList[MonthNum-1]
 #
 ReportPath = dir_path + '/Reports/' + str(ReportYear)
 p = Path(ReportPath) 
+logger.info('Reports directory is ' + str(p))
 
 # If the path doesn't exist, then create it (usually only for the January reports).
 #
@@ -105,5 +106,5 @@ else:
 
     logger.info('Reports for ' + ReportMonth + '-' + str(ReportYear) + ' created.')
     logger.info('Emailing reports just created.')
-    send_reports("NPSC Sailsheets Reports for " + str(ReportYear) + ' ' + ReportMonth, [Report1, Report2])
+    send_reports(str(os.uname()[1]) + ': ' + "NPSC Sailsheets Reports for " + str(ReportYear) + ' ' + ReportMonth, [Report1, Report2])
     logger.info('Reports emailed.')

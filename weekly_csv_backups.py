@@ -40,7 +40,7 @@ def send_files(files=[]):
     """
     #em_subject = 'NPSC Club Computer Monthly Reports'
     #em_address = 'treas@navypaxsail.com'
-    em_subject = "Weekly Sailsheets backup files"
+    em_subject = str(os.uname()[1]) + ': ' + 'Weekly Sailsheets backup files'
     em_address = 'greenshirt82@gmail.com'
 
     msg = EmailMessage()
@@ -67,11 +67,12 @@ today = datetime.today()
 
 backuppath = dir_path + '/Backups/' + str(today.year)
 p = Path(backuppath) 
+logger.info('Backup directory is ' + str(p))
 
 if not Path(backuppath).exists():
     p.mkdir(parents=True)
 
-db = sqlite3.connect('Sailsheets.db')
+db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
 c = db.cursor()
 
 

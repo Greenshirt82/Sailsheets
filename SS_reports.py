@@ -15,12 +15,17 @@ from pathlib import Path
 from datetime import date
 from tkinter import messagebox
 import csv
+import os
 
 # Set up the logging system
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+filename = os.path.join(dir_path, 'sailsheets.log')
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-file_handler = logging.FileHandler('sailsheets.log')
+file_handler = logging.FileHandler(filename)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -34,9 +39,10 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
                     'July', 'August', 'September',
                     'October', 'November', 'December']
 
-    reportpath = './Reports/' + str(d.year)
+    reportpath = dir_path + '/Reports/' + str(d.year)
     p = Path(reportpath) 
-    
+    logger.info('Report directory is ' + str(p))
+
     if not Path(reportpath).exists():
         p.mkdir(parents=True)
 
@@ -62,7 +68,7 @@ def ReportUsage(mymonth, myyear, NPSCOnly):
     #    m_type text        membership_type (AE)
     #    m_prime text       primary_member (AI)
 
-    db = sqlite3.connect('Sailsheets.db')
+    db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     c = db.cursor()
         
     """CREATE TABLE Members (m_id int primary key,
@@ -298,11 +304,11 @@ def ReportDetailUse():
                     'July', 'August', 'September',
                     'October', 'November', 'December']
 
-    reportpath = './Reports'
+    reportpath = dir_path + '/Reports'
     
     myreportname = reportpath + '/' + ' Detailed Utilization' + '.csv'
 
-    db = sqlite3.connect('Sailsheets.db')
+    db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     c = db.cursor()
         
     c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, ledger_id, 
@@ -678,11 +684,11 @@ def ReportSummaryUse():
                     'July', 'August', 'September',
                     'October', 'November', 'December']
 
-    reportpath = './Reports'
+    reportpath = dir_path + '/Reports'
     
     myreportname = reportpath + '/' + ' Summary Utilization' + '.csv'
 
-    db = sqlite3.connect('Sailsheets.db')
+    db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     c = db.cursor()
         
     c.execute("""SELECT Boats.boat_class AS boatclass, SailPlan.sp_sailboat as Sailboat, 
@@ -1039,15 +1045,15 @@ def ReportMemberUse(mymonth, myyear):
                     'July', 'August', 'September',
                     'October', 'November', 'December']    
 
-    reportpath = './Reports/' + str(d.year)
+    reportpath = dir_path + '/Reports/' + str(d.year)
     p = Path(reportpath) 
 
     if not Path(reportpath).exists():
         p.mkdir(parents=True)
 
-    myreportname =  './Reports/' + str(d.year) +'/' + str(d.year) + ' ' + month_list[mymonth-1] + ' Fees Payable from Members' + '.csv'
+    myreportname =  dir_path + '/Reports/' + str(d.year) +'/' + str(d.year) + ' ' + month_list[mymonth-1] + ' Fees Payable from Members' + '.csv'
 
-    db = sqlite3.connect('Sailsheets.db')
+    db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     c = db.cursor()
         
     """CREATE TABLE Ledger (ledger_id int primary key,
@@ -1217,7 +1223,7 @@ def MemberUseLog(member_id):
                     'July', 'August', 'September',
                     'October', 'November', 'December']    
 
-    reportpath = './Reports/UserLogs'
+    reportpath = dir_path + '/Reports/UserLogs'
     p = Path(reportpath) 
 
     if not Path(reportpath).exists():
@@ -1225,7 +1231,7 @@ def MemberUseLog(member_id):
 
     myreportname =  reportpath + '/UsageLog for ID - ' + str(member_id) + '.csv'
 
-    db = sqlite3.connect('Sailsheets.db')
+    db = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     c = db.cursor()
         
     """CREATE TABLE Ledger (ledger_id int primary key,

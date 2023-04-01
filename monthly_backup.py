@@ -57,6 +57,7 @@ delta = timedelta(days=5)
 #
 backuppath = dir_path + '/Backups/' + str(today.year)
 p = Path(backuppath) 
+logger.info('Backup directory is ' + str(p))
 
 # If the backup path does not exist, create it.
 #
@@ -76,11 +77,12 @@ MostRecentFile = os.path.basename(max(paths, key = os.path.getctime))
 #   otherwise, make a new backup and send an email to the Commodore
 #
 if DateNow - delta <= datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))):
-    logger.info('Recent backup file exists.')
+    logger.info('Recent backup file exists @: ' + str(MostRecentFile))
+    send_email('comm@navypaxsail.com', str(os.uname()[1]) + ': ' + 'Monthly Backup', str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' already exists.')
 else:
     logger.info('Backup file started.')
-    primedb = sqlite3.connect('Sailsheets.db')
+    primedb = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     backupdb = sqlite3.connect(backuppath + '/' + str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db')
     primedb.backup(backupdb)
     logger.info('Backup file completed.')
-    send_email('comm@navypaxsail.com', 'Monthly Backup', str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created')
+    send_email('comm@navypaxsail.com', str(os.uname()[1]) + ': ' + 'Monthly Backup', str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created')
