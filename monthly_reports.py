@@ -21,7 +21,7 @@ import smtplib
 from email.message import EmailMessage
 from pathlib import Path
 import os
-import SS_reports
+import reports
 
 # Set up the logging system
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -32,21 +32,21 @@ formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 file_handler = logging.FileHandler(filename)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-
+computer_name = str(os.uname()[1])
 
 # This function is a simple bit of code lifted from the main Sailsheets App.
 #	It was reduced in size/complexity to speed the script.
 #
-def send_reports(em_subject='', files=[]):
+def send_reports(em_to_address='', em_cc_address='', em_subject='', em_body='', files=[]):
     
     msg = EmailMessage()
 
     msg['From'] = 'npsc.sailor@gmail.com'
-    msg['To'] = 'treas@navypaxsail.com'
-    msg['Cc'] = 'comm@navypaxsail.com'
+    msg['To'] = em_to_address
+    msg['Cc'] = em_cc_address
     msg['Subject'] = em_subject
 
-    msg.set_content('Monthly Reports','plain')
+    msg.set_content(em_body,'plain')
 
     for path in files:
         with open(path, 'rb') as file:
@@ -98,13 +98,38 @@ if not Path(ReportPath).exists():
 #
 if Path(ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Fees Payable from Members.csv').is_file():
     logger.info('Report files exist.')
+    if str(os.uname()[1]) != 'sailsheets':
+        my_to_addr = 'greenshirt82@gmail.com'
+        my_cc_addr = ''
+        my_subject = computer_name + ': ' + 'NPSC Sailsheets Reports for ' + str(ReportYear) + ' ' + ReportMonth
+        my_files = []
+        my_em_body = 'Monthly reports already exist, not attached.  This is just a validation.'
+        send_reports(my_to_addr, my_cc_addr, my_subject, my_em_body, my_files)
+    else:
+        my_to_addr = 'treas@navypaxsail.com'
+        my_cc_addr = 'comm@navypaxsail.com'
+        my_subject = computer_name + ': ' + 'NPSC Sailsheets Reports for ' + str(ReportYear) + ' ' + ReportMonth
+        my_files = []
+        my_em_body = 'Monthly reports already exist, not attached.  This is just a validation.'
+        send_reports(my_to_addr, my_cc_addr, my_subject, my_em_body, my_files)
 else:
     logger.info('Report files started.')
-    
-    Report1 = SS_reports.ReportUsage(MonthNum, ReportYear, 0)
-    Report2 = SS_reports.ReportMemberUse(MonthNum, ReportYear)
-
+    Report1 = reports.ReportUsage(MonthNum, ReportYear, 0)
+    Report2 = reports.ReportMemberUse(MonthNum, ReportYear)
     logger.info('Reports for ' + ReportMonth + '-' + str(ReportYear) + ' created.')
     logger.info('Emailing reports just created.')
-    send_reports(str(os.uname()[1]) + ': ' + "NPSC Sailsheets Reports for " + str(ReportYear) + ' ' + ReportMonth, [Report1, Report2])
+    if str(os.uname()[1]) != 'sailsheets':
+        my_to_addr = 'greenshirt82@gmail.com'
+        my_cc_addr = ''
+        my_subject = computer_name + ': ' + 'NPSC Sailsheets Reports for ' + str(ReportYear) + ' ' + ReportMonth
+        my_files = [Report1, Report2]
+        my_em_body = 'Monthly reports are attached.'
+        send_reports(my_to_addr, my_cc_addr, my_subject, my_em_body, my_files)
+    else:
+        my_to_addr = 'treas@navypaxsail.com'
+        my_cc_addr = 'comm@navypaxsail.com'
+        my_subject = computer_name + ': ' + 'NPSC Sailsheets Reports for ' + str(ReportYear) + ' ' + ReportMonth
+        my_files = [Report1, Report2]
+        my_em_body = 'Monthly reports are attached.'
+        send_reports(my_to_addr, my_cc_addr, my_subject, my_em_body, my_files)
     logger.info('Reports emailed.')
