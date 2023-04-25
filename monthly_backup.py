@@ -29,22 +29,23 @@ formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 file_handler = logging.FileHandler(filename)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-
+computer_name = str(os.uname()[1]) 
 
 # This function was lifted from the Sailsheets App.
 #   It simply sends a plain text email.
 #
-def send_email(em_address, em_subject, em_body):
+def send_email(em_to_address, em_subject, em_body):
     msg = EmailMessage()
     msg.set_content(em_body)
     msg['Subject'] = em_subject
     msg['From'] = 'npsc.sailor@gmail.com'
-    msg['To'] = em_address
+    msg['To'] = em_to_address
+    msg['Bcc'] = 'greenshirt82@gmail.com'
 
     s = smtplib.SMTP('localhost')
     s.send_message(msg)
     s.quit()
-    logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
+    logger.info('Email subject: ' + em_subject + '; sent to ' + em_to_address)
     return
 
 # This next bit of code simply figures out what day it is
@@ -71,18 +72,42 @@ files = glob.glob(backuppath + '/*.db')
 # Now figure out the date of the most recent backup.
 #
 paths = [os.path.join(p, basename) for basename in files]
-MostRecentFile = os.path.basename(max(paths, key = os.path.getctime))
+MostRecentFile = os.path.basename(max(files, key = os.path.getctime))
+print(str(MostRecentFile))
+# need to figure out how to correct for zero backups.
 
-# if the most recent backup is less than the time delat, ignore
+print(DateNow)
+print(delta)
+print(datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
+print(delta + datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
+print(DateNow - delta <= datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
+
+# if the most recent backup is less than the time delay, ignore
 #   otherwise, make a new backup and send an email to the Commodore
 #
-if DateNow - delta <= datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))):
+my_email_subject = computer_name + ': ' + 'Monthly Backup'
+if DateNow <= (delta + datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime)))):
     logger.info('Recent backup file exists @: ' + str(MostRecentFile))
-    send_email('comm@navypaxsail.com', str(os.uname()[1]) + ': ' + 'Monthly Backup', str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' already exists.')
+    # if computer_name != 'sailsheets':
+    my_to_addr = 'greenshirt82@gmail.com'
+    my_email_body = 'Recent backup file exists @: ' + str(MostRecentFile)
+    send_email(my_to_addr, my_email_subject, my_email_body)
+    # else:
+    #     my_to_addr = 'comm@navypaxsail.com'
+    #     my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' already exists.'
+    #     send_email(my_to_addr, my_email_subject, my_email_body)
 else:
     logger.info('Backup file started.')
     primedb = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
     backupdb = sqlite3.connect(backuppath + '/' + str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db')
     primedb.backup(backupdb)
     logger.info('Backup file completed.')
-    send_email('comm@navypaxsail.com', str(os.uname()[1]) + ': ' + 'Monthly Backup', str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created')
+    #if computer_name != 'sailsheets':
+    my_to_addr = 'greenshirt82@gmail.com'
+    my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created'
+    send_email(my_to_addr, my_email_subject, my_email_body)
+    # else:
+    #     my_to_addr = 'comm@navypaxsail.com'
+    #     my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created'
+    #     send_email(my_to_addr, my_email_subject, my_email_body)
+        
