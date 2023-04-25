@@ -8,8 +8,8 @@
 import logging
 import datetime as dt
 from pathlib import Path
-import SS_reports
-import SS_Email_Functions
+import reports
+import email_functions
 import os
 
 # Set up the logging system
@@ -55,8 +55,8 @@ if Path(ReportPath + '/' + str(ReportYear) + ' ' + ReportMonth + ' ' + 'Fees Pay
 else:
     logger.info('Report files started.')
     
-    Report1 = SS_reports.ReportUsage(MonthNum, ReportYear, 0)
-    Report2 = SS_reports.ReportMemberUse(MonthNum, ReportYear)
+    Report1 = reports.ReportUsage(MonthNum, ReportYear, 0)
+    Report2 = reports.ReportMemberUse(MonthNum, ReportYear)
     # ChargesFile = SS_Create_Charges_File.CreateChargesFile(mymonth, myyear)
 
     logger.info('Reports for ' + ReportMonth + '-' + str(ReportYear) + ' created.')
