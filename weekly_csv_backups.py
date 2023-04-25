@@ -28,7 +28,7 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
-def send_files(files=[]):
+def send_files(em_to_address='', files=[]):
     """Compose and send email with provided info and attachments.
 
     Args:
@@ -41,12 +41,11 @@ def send_files(files=[]):
     #em_subject = 'NPSC Club Computer Monthly Reports'
     #em_address = 'treas@navypaxsail.com'
     em_subject = str(os.uname()[1]) + ': ' + 'Weekly Sailsheets backup files'
-    em_address = 'greenshirt82@gmail.com'
-
+    
     msg = EmailMessage()
 
     msg['From'] = 'npsc.sailor@gmail.com'
-    msg['To'] = em_address
+    msg['To'] = em_to_address
     #msg['Cc'] = 'comm@navypaxsail.com'
     msg['Subject'] = em_subject
 
@@ -60,7 +59,7 @@ def send_files(files=[]):
     with smtplib.SMTP('localhost') as s:
         s.send_message(msg)
     #s.quit()
-    logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
+    logger.info('Email subject: ' + em_subject + '; sent to ' + em_to_address)
 
 
 today = datetime.today()
@@ -99,11 +98,12 @@ logger.info('All tables exported to backup folder.')
 
 file_list = []
 
+to_address = 'greenshirt82@gmail.com'
 for table_name in table_list:
     table_name = table_name[0]
     
     file_list.append(backuppath + '/' + str(today.strftime('%Y-%m-%d')) + '_' + table_name + '.csv')
 
-send_files(file_list)
+send_files(to_address, file_list)
 
-logger.info('All files sent to greenshirt82@gmail.com.')
+logger.info('All files sent to ' + to_address)
