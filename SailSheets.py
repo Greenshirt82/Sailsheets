@@ -71,14 +71,13 @@ import pwd
 from screeninfo import get_monitors
 
 # next import the separate modules of the Sailsheets app
-import SS_admin
-import SS_db_functions
+import admin
 import editmembers
 import editboats
 import editpurpose
 import editledger
 import LiabilityWaiver
-import SS_reports
+import reports
 import sailplan
 import updatemembers
 
@@ -121,11 +120,12 @@ def main():
     # Sail Plan creation (check out and check in).
     #
     my_user = pwd.getpwuid(os.getuid()).pw_name
-    #my_user = 'NPSC_Sailor' # used for testing
-    my_user = 'npscadmin' # used for testing
+    #my_user = 'NPSC_Sailor' # used for production
+    #my_user = 'npsc_admin' # used for production
+    #my_user = 'npscadmin' # used for development
     logger.info(my_user + ' logged in')
         
-    if my_user == 'npscadmin':
+    if my_user == 'npscadmin' or my_user == 'npsc_admin':
         admin_state = "normal"
         main_banner = "ADMIN -- Navy Patuxent Sailing Club -- ADMIN"
         main_color = "red"
@@ -151,10 +151,10 @@ def main():
     my_menu.add_cascade(label="Admin", menu=admin_menu, state=admin_state)
 
     admin_menu.add_command(label="Update Membership", 
-        command=lambda: SS_admin.a_update_members(root))
+        command=lambda: admin.a_update_members(root))
 
-    admin_menu.add_command(label="Backup ALL to Excel", 
-        command=lambda: SS_db_functions.export_excel())
+    # admin_menu.add_command(label="Backup ALL to Excel", 
+    #     command=lambda: db_functions.export_excel())
 
 
     # Edit menu are those admin items that "edit" single records
@@ -171,7 +171,7 @@ def main():
         command=lambda: editmembers.editmembers(root))
 
     edit_menu.add_command(label="Settings", 
-        command=lambda: SS_admin.editsettings(root))
+        command=lambda: admin.editsettings(root))
 
     edit_menu.add_separator()
 
@@ -185,14 +185,14 @@ def main():
     # These are the monthly reports
     reports_menu = Menu(my_menu)
     my_menu.add_cascade(label="Reports", menu=reports_menu, state=admin_state)
-    reports_menu.add_command(label="Create Monthly Reports", 
-        command=lambda: SS_admin.monthly_reports(root))
+    #reports_menu.add_command(label="Create Monthly Reports", 
+    #    command=lambda: admin.monthly_reports(root))
     reports_menu.add_command(label="Create Member Use Log", 
-        command=lambda: SS_admin.member_usage_log(root))
+        command=lambda: admin.member_usage_log(root))
     reports_menu.add_command(label="Create Detail Usage Report", 
-        command=lambda: SS_reports.ReportDetailUse())
+        command=lambda: reports.ReportDetailUse())
     reports_menu.add_command(label="Create Summary Usage Report", 
-        command=lambda: SS_reports.ReportSummaryUse())
+        command=lambda: reports.ReportSummaryUse())
 
     # Let's put a label at the top of the window
     my_label = Label(root, text = main_banner, fg=main_color, font=("Helvetica", 24))
@@ -200,7 +200,7 @@ def main():
 
 
     # If the user is not the admin, then just show the sail plan menu
-    if my_user != 'npscadmin':
+    if my_user != 'npscadmin' and my_user != 'npsc_admin':
         sailplan.sailplanmenu(root, my_user)
 
     root.mainloop()
