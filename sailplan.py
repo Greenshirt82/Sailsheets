@@ -11,7 +11,7 @@ import datetime as dt
 from datetime import timedelta
 
 # modules used
-import SS_Email_Functions
+import email_functions
 #import checkreports
 
 # Set up the logging system
@@ -1051,7 +1051,7 @@ def sailplanmenu(mywin, my_user):
 			close_sailplan_record(sailplan)
 			write_fees_to_ledger(crewlist_w_fee, sailplan)
 			cleanup_open_data(myspid)
-			SS_Email_Functions.sailplan_closed_email(sailplan)
+			email_functions.sailplan_closed_email(sailplan)
 
 			logger.info('Sailplan closed & written to ledger: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
 
