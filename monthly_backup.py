@@ -1,16 +1,15 @@
+###############################################################################
 # Monthly backup
 #
-# This file creates a backup of the Sailsheets.db file but only if
-#   a backup is older than 5 days.
+# This file creates a backup of the Sailsheets.db file 
 #
-# This script is executed via cron at 0000 on 1st day of every month
-#   or
-# on rebood of the computer.
+# This script is executed via cron monthly or manually as needed.
+#
+###############################################################################
 
-import datetime 
-from datetime import timedelta, datetime
+#import datetime 
+from datetime import date
 from pathlib import Path
-import glob
 import os
 import csv
 import logging
@@ -20,9 +19,7 @@ from email.message import EmailMessage
 
 # Set up the logging system
 dir_path = os.path.dirname(os.path.realpath(__file__))
-
 filename = os.path.join(dir_path, 'sailsheets.log')
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
@@ -40,7 +37,6 @@ def send_email(em_to_address, em_subject, em_body):
     msg['Subject'] = em_subject
     msg['From'] = 'npsc.sailor@gmail.com'
     msg['To'] = em_to_address
-    msg['Bcc'] = 'greenshirt82@gmail.com'
 
     s = smtplib.SMTP('localhost')
     s.send_message(msg)
@@ -48,66 +44,35 @@ def send_email(em_to_address, em_subject, em_body):
     logger.info('Email subject: ' + em_subject + '; sent to ' + em_to_address)
     return
 
-# This next bit of code simply figures out what day it is
-#
-DateNow = datetime.now()
-today = datetime.today()
-delta = timedelta(days=5)
-
 # Make sure we know what the file path is to the backup directory.
 #
+today = date.today()
 backuppath = dir_path + '/Backups/' + str(today.year)
 p = Path(backuppath) 
 logger.info('Backup directory is ' + str(p))
+backupfile = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db'
 
 # If the backup path does not exist, create it.
 #
 if not Path(backuppath).exists():
     p.mkdir(parents=True)
 
-# This next line is a special function I pulled in to easily find the db files
-#
-files = glob.glob(backuppath + '/*.db')
-
-# Now figure out the date of the most recent backup.
-#
-paths = [os.path.join(p, basename) for basename in files]
-MostRecentFile = os.path.basename(max(files, key = os.path.getctime))
-print(str(MostRecentFile))
-# need to figure out how to correct for zero backups.
-
-print(DateNow)
-print(delta)
-print(datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
-print(delta + datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
-print(DateNow - delta <= datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime))))
-
-# if the most recent backup is less than the time delay, ignore
-#   otherwise, make a new backup and send an email to the Commodore
+# This next line tells the dev which computer is doing the backup
 #
 my_email_subject = computer_name + ': ' + 'Monthly Backup'
-if DateNow <= (delta + datetime.fromtimestamp(os.path.getctime(max(paths, key = os.path.getctime)))):
-    logger.info('Recent backup file exists @: ' + str(MostRecentFile))
-    # if computer_name != 'sailsheets':
+#
+if Path(backuppath + '/' + backupfile).is_file():
+    logger.info('Recent backup file exists @: ' + backupfile)
     my_to_addr = 'greenshirt82@gmail.com'
-    my_email_body = 'Recent backup file exists @: ' + str(MostRecentFile)
+    my_email_body = 'Recent backup file exists @: ' + backupfile
     send_email(my_to_addr, my_email_subject, my_email_body)
-    # else:
-    #     my_to_addr = 'comm@navypaxsail.com'
-    #     my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' already exists.'
-    #     send_email(my_to_addr, my_email_subject, my_email_body)
 else:
     logger.info('Backup file started.')
     primedb = sqlite3.connect(dir_path + '/' + 'Sailsheets.db')
-    backupdb = sqlite3.connect(backuppath + '/' + str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db')
+    backupdb = sqlite3.connect(backuppath + '/' + backupfile)
     primedb.backup(backupdb)
     logger.info('Backup file completed.')
-    #if computer_name != 'sailsheets':
     my_to_addr = 'greenshirt82@gmail.com'
-    my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created'
+    my_email_body = backupfile + ' created'
     send_email(my_to_addr, my_email_subject, my_email_body)
-    # else:
-    #     my_to_addr = 'comm@navypaxsail.com'
-    #     my_email_body = str(today.strftime('%Y-%m-%d')) + '_' + 'Backup.db' + ' created'
-    #     send_email(my_to_addr, my_email_subject, my_email_body)
-        
+exit()
