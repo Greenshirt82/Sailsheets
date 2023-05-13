@@ -4,6 +4,7 @@ import datetime
 from datetime import date
 import csv
 import os
+import sys
 
 # Set up the logging system
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -99,3 +100,10 @@ def UpdateMembers(allmembersfile):
     db.commit()
     db.close()
     logger.info('updatemembers function completed.')
+
+if __name__ == '__main__':
+    UpdateMembers(sys.argv[1])
+#
+#
+# End of module.
+###########################################################
