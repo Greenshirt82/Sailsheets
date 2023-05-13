@@ -28,8 +28,7 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 computer_name = str(os.uname()[1]) 
 
-# This function was lifted from the Sailsheets App.
-#   It simply sends a plain text email.
+# This function simply sends a plain text email.
 #
 def send_email(em_to_address, em_subject, em_body):
     msg = EmailMessage()
