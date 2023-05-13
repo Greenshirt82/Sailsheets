@@ -42,12 +42,12 @@ def send_email(em_address, em_subject, em_body):
 	msg['From'] = 'npsc.sailor@gmail.com'
 	msg['To'] = em_address
 	#msg['Bcc'] = 'comm@navypaxsail.com, treas@navypaxsail.com'
-
-
+	#msg.send(to=em_address, bcc='npsc.commodore@gmail.com', subject=em_subject, contents=em_body)
 	s = smtplib.SMTP('localhost')
 	s.send_message(msg)
 	s.quit()
 	logger.info('Email subject: ' + em_subject + '; sent to ' + em_address)
+	print('Email subject: ' + em_subject + '; sent to ' + em_address)
 	return
 
 def send_reports(files=[]):
@@ -61,9 +61,9 @@ def send_reports(files=[]):
         files (list[str]): list of file paths to be attached to email
     """
     em_subject = 'NPSC Club Computer Monthly Reports'
-    em_address = 'treas@navypaxsail.com'
+    #em_address = 'treas@navypaxsail.com'
     #em_subject = "Test CRON reporting"
-    #em_address = 'greenshirt82@gmail.com'
+    em_address = 'greenshirt82@gmail.com'
 
     msg = EmailMessage()
 
@@ -143,6 +143,6 @@ def member_email(ledgerid, sailplanid):
 	return
 
 if __name__ == '__main__':
-    # send_email('npsc.sailor@gmail.com', 'Test email subject', 'This is just a test of the smtp library for Sailsheets.')
-    my_files = ['./Reports/2022/September 2022 Usage Fees Payable to MWR.csv', './Reports/2022/September 2022 Fees Payable from Members.csv']
-    send_reports(my_files)
+    send_email('npsc.sailor@gmail.com', 'Test email subject', 'This is just a test of the smtp library for Sailsheets.')
+    #my_files = ['./Reports/2022/September 2022 Usage Fees Payable to MWR.csv', './Reports/2022/September 2022 Fees Payable from Members.csv']
+    #send_reports(my_files)
