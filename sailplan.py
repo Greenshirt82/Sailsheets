@@ -1,3 +1,9 @@
+###############################################################################
+#
+#	6/9/2023 -- removing emailing functions via comment until the email works
+#	again.
+#
+
 from screeninfo import get_monitors
 from tkinter import *
 from tkinter import ttk
@@ -11,7 +17,7 @@ import datetime as dt
 from datetime import timedelta
 
 # modules used
-import email_functions
+#import email_functions
 #import checkreports
 
 # Set up the logging system
@@ -113,7 +119,7 @@ class sp_askokcancel(object):
 # Sail Plan
 #
 def sailplanmenu(mywin, my_user):
-	# what works on 7/19:
+	# what works on 5/23/2023:
 	#
 	# - Add a sailplan.  
 	# - Edit a sailplan
@@ -122,10 +128,10 @@ def sailplanmenu(mywin, my_user):
 	# -- delete crewmembers or guests
 	# - Delete an open sailplan and its crewlist
 	# - Close a sailplan & post to the Ledger File
-	# 
-	# Things that don't work:
 	# - Disabling fields we don't want user to change
 	# 
+	# Things that don't work:
+	# - Occasionally the SP cannot be closed, requiring manual edit of the table
 	# 
 
 	#################################################################
@@ -1051,7 +1057,7 @@ def sailplanmenu(mywin, my_user):
 			close_sailplan_record(sailplan)
 			write_fees_to_ledger(crewlist_w_fee, sailplan)
 			cleanup_open_data(myspid)
-			email_functions.sailplan_closed_email(sailplan)
+			# email_functions.sailplan_closed_email(sailplan)
 
 			logger.info('Sailplan closed & written to ledger: ' + str(sailplan[0]) + '-' + str(sailplan[3]))
 
